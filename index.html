@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Business Pro Barber Demo</title>
+
+  <link
+    rel="stylesheet"
+    href="style.css"
+  >
+
+</head>
+
+
+<body>
+
+
+  <!-- ========================================
+       HEADER
+  ========================================= -->
+
+  <header>
+
+    <h1 id="shop-name">
+      BARBER SHOP
+    </h1>
+
+
+    <nav>
+
+      <a href="#home">
+        Home
+      </a>
+
+      <a href="#services">
+        Services
+      </a>
+
+      <a href="#barbers">
+        Our Barbers
+      </a>
+
+      <a href="#contact">
+        Contact
+      </a>
+
+    </nav>
+
+
+    <button
+      class="book-button open-booking"
+      data-barber=""
+    >
+      Book Appointment
+    </button>
+
+  </header>
+
+
+
+  <main>
+
+
+    <!-- ========================================
+         HERO
+    ========================================= -->
+
+    <section
+      id="home"
+      class="hero"
+    >
+
+
+    </section>
+
+
+
+    <!-- ========================================
+         SERVICES
+    ========================================= -->
+
+    <section id="services">
+
+      <h2>
+        Our Services
+      </h2>
+
+      <div
+        id="services-list"
+        class="services"
+      >
+      </div>
+
+    </section>
+
+
+
+    <!-- ========================================
+         MEET OUR BARBERS
+    ========================================= -->
+
+    <section
+      id="barbers"
+      class="barbers-section"
+    >
+
+      <h2>
+        Meet Our Barbers
+      </h2>
+
+
+      <!--
+        Small barber cards are created
+        automatically from shop-config.js.
+
+        Customer clicks a barber card
+        to open that barber's profile popup.
+      -->
+
+      <div
+        id="barber-selector"
+        class="barber-selector"
+      >
+      </div>
+
+    </section>
+
+
+
+    <!-- ========================================
+         CONTACT
+    ========================================= -->
+
+    <section id="contact">
+
+      <h2>
+        Visit Us
+      </h2>
+
+
+      <p id="shop-address-line1">
+      </p>
+
+
+      <p id="shop-address-line2">
+      </p>
+
+
+      <p>
+
+        <a
+          id="shop-phone-link"
+          href="#"
+        >
+        </a>
+
+      </p>
+
+
+      <div id="shop-hours">
+      </div>
+
+    </section>
+
+
+  </main>
+
+
+
+  <!-- ========================================
+       INDIVIDUAL BARBER PROFILE POPUP
+
+       Joe, Tom, or any future barber
+       loads inside this popup.
+  ========================================= -->
+
+  <div
+    id="barber-profile-modal"
+    class="barber-profile-modal"
+  >
+
+    <div class="barber-profile-modal-content">
+
+
+      <button
+        type="button"
+        id="close-barber-profile"
+        class="close-barber-profile"
+        aria-label="Close barber profile"
+      >
+        &times;
+      </button>
+
+
+      <div id="barber-profile-content">
+      </div>
+
+
+    </div>
+
+  </div>
+
+
+
+  <!-- ========================================
+       BOOKING POPUP
+  ========================================= -->
+
+  <div
+    id="booking-modal"
+    class="booking-modal"
+  >
+
+    <div class="booking-modal-content">
+
+
+      <button
+        type="button"
+        id="close-booking"
+        class="close-booking"
+        aria-label="Close booking window"
+      >
+        &times;
+      </button>
+
+
+      <h2>
+        Book Your Appointment
+      </h2>
+
+
+
+      <!-- BARBER -->
+
+      <label for="barber-select">
+        Choose Your Barber
+      </label>
+
+      <select id="barber-select">
+
+        <option value="">
+          Select a barber
+        </option>
+
+      </select>
+
+
+      <p class="booking-with">
+
+        Booking with
+
+        <strong id="selected-barber">
+          Select a Barber
+        </strong>
+
+      </p>
+
+
+
+      <div class="booking-form">
+
+
+        <!-- SERVICE -->
+
+        <label for="service">
+          Choose a Service
+        </label>
+
+        <select id="service">
+
+          <option value="">
+            Select a service
+          </option>
+
+        </select>
+
+
+
+        <!-- DATE -->
+
+        <label for="appointment-date">
+          Choose a Date
+        </label>
+
+        <input
+          type="date"
+          id="appointment-date"
+        >
+
+
+
+        <!-- TIME -->
+
+        <label for="appointment-time">
+          Choose an Available Time
+        </label>
+
+        <select id="appointment-time">
+
+          <option value="">
+            Select a time
+          </option>
+
+        </select>
+
+
+
+        <!-- CUSTOMER NAME -->
+
+        <label for="customer-name">
+          Your Name
+        </label>
+
+        <input
+          type="text"
+          id="customer-name"
+          placeholder="Enter your name"
+        >
+
+
+
+        <!-- PHONE -->
+
+        <label for="customer-phone">
+          Mobile Phone
+        </label>
+
+        <input
+          type="tel"
+          id="customer-phone"
+          placeholder="(207) 555-0123"
+        >
+
+
+
+        <!-- SMS CONSENT -->
+
+        <label class="sms-consent">
+
+          <input
+            type="checkbox"
+            id="sms-consent"
+          >
+
+          <span>
+
+            I agree to receive appointment confirmations,
+            reminders, scheduling updates, and cancellation
+            notifications by text message.
+
+            Message and data rates may apply.
+            Reply STOP to opt out.
+
+            SMS consent is optional.
+
+          </span>
+
+        </label>
+
+
+        <p class="sms-policy-links">
+
+          <a
+            href="https://village-barber-sms.onrender.com/privacy"
+            target="_blank"
+            rel="noopener"
+          >
+            Privacy Policy
+          </a>
+
+          |
+
+          <a
+            href="https://village-barber-sms.onrender.com/terms"
+            target="_blank"
+            rel="noopener"
+          >
+            Terms &amp; Conditions
+          </a>
+
+        </p>
+
+
+
+        <!-- CONFIRM -->
+
+        <button
+          type="button"
+          id="confirm-booking"
+        >
+          Confirm Appointment
+        </button>
+
+
+        <div id="confirmation-message">
+        </div>
+
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+
+  <!-- ========================================
+       FOOTER
+  ========================================= -->
+
+  <footer>
+
+    <p id="footer-shop-name">
+      Barber Shop
+    </p>
+
+    <p>
+      Website powered by Business Pro
+    </p>
+
+  </footer>
+
+
+
+  <!-- ========================================
+       CONFIG + WEBSITE ENGINE
+  ========================================= -->
+
+  <script src="shop-config.js"></script>
+
+  <script>
+
+    const joe =
+      window.SHOP_CONFIG.barbers.find(
+        barber => barber.id === "joe"
+      );
+
+    if (joe) {
+
+      joe.gallery = [
+
+        {
+          image:
+            "images/demo-cut-1.jpg",
+          caption:
+            "Skin Fade"
+        },
+
+        {
+          image:
+            "images/demo-cut-2.jpg",
+          caption:
+            "Beard Trim"
+        }
+
+      ];
+
+    }
+
+  </script>
+
+  <script src="script.js"></script>
+
+
+</body>
+
+</html>

@@ -1,0 +1,1534 @@
+/* ============================================================
+   BUSINESS PRO BARBER TEMPLATE
+   CUSTOMER WEBSITE
+============================================================ */
+
+
+/* ============================================================
+   RESET
+============================================================ */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+
+html {
+  scroll-behavior: smooth;
+}
+
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  background: #f5f5f5;
+  color: #222;
+  line-height: 1.6;
+}
+
+
+
+/* ============================================================
+   HEADER
+============================================================ */
+
+header {
+  background: #111;
+  color: white;
+
+  padding: 20px 7%;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 25px;
+
+  flex-wrap: wrap;
+}
+
+
+header h1 {
+  font-size: 24px;
+  letter-spacing: 2px;
+}
+
+
+nav {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+}
+
+
+nav a {
+  color: white;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+
+nav a:hover {
+  text-decoration: underline;
+}
+
+
+
+/* ============================================================
+   BUTTONS
+============================================================ */
+
+.book-button,
+#confirm-booking,
+.cancel-appointment {
+  display: inline-block;
+
+  background: white;
+  color: #111;
+
+  border: 2px solid #111;
+
+  padding: 12px 22px;
+
+  border-radius: 7px;
+
+  font-size: 16px;
+  font-weight: bold;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+
+.book-button:hover,
+#confirm-booking:hover {
+  background: #111;
+  color: white;
+}
+
+
+.book-button:active,
+#confirm-booking:active {
+  transform: scale(0.98);
+}
+
+
+header .book-button {
+  border-color: white;
+}
+
+
+header .book-button:hover {
+  background: white;
+  color: #111;
+}
+
+
+
+/* ============================================================
+   HERO
+============================================================ */
+
+.hero {
+  min-height: 500px;
+
+  background-image:
+    linear-gradient(
+      rgba(0, 0, 0, 0.40),
+      rgba(0, 0, 0, 0.40)
+    ),
+    url("images/village-barber.jpg");
+
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  color: white;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+
+  padding: 120px 20px;
+}
+
+
+.hero-content {
+  max-width: 850px;
+}
+
+
+.hero h2 {
+  font-size: 48px;
+
+  margin-bottom: 15px;
+
+  letter-spacing: 3px;
+
+  text-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.8);
+}
+
+
+.hero p {
+  font-size: 20px;
+
+  margin-bottom: 30px;
+
+  text-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.8);
+}
+
+
+.hero .book-button {
+  background: white;
+  color: #111;
+}
+
+
+
+/* ============================================================
+   GENERAL SECTIONS
+============================================================ */
+
+section {
+  padding: 70px 7%;
+}
+
+
+section h2 {
+  text-align: center;
+
+  font-size: 34px;
+
+  margin-bottom: 30px;
+}
+
+
+
+/* ============================================================
+   SERVICES
+============================================================ */
+
+.services {
+  max-width: 1000px;
+
+  margin: 0 auto;
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(4, 1fr);
+
+  gap: 20px;
+}
+
+
+.service-card {
+  background: white;
+
+  padding: 30px 15px;
+
+  text-align: center;
+
+  border-radius: 10px;
+
+  box-shadow:
+    0 3px 12px rgba(0, 0, 0, 0.10);
+}
+
+
+.service-card h3 {
+  margin-bottom: 10px;
+}
+
+
+.service-card p {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+
+
+/* ============================================================
+   MEET OUR BARBERS
+============================================================ */
+
+.barbers-section {
+  background: white;
+
+  padding-top: 30px;
+  padding-bottom: 38px;
+
+  text-align: center;
+}
+
+
+.barbers-section > h2 {
+  font-size: 27px;
+
+  margin-bottom: 22px;
+}
+
+
+
+/* ============================================================
+   CENTERED BARBER CARD GROUP
+============================================================ */
+
+.barber-selector {
+  width: 100%;
+
+  max-width: 1000px;
+
+  margin: 0 auto;
+
+  display: flex;
+
+  justify-content: center;
+  align-items: stretch;
+
+  flex-wrap: wrap;
+
+  gap: 22px;
+}
+
+
+
+/* ============================================================
+   SMALL CLICKABLE BARBER CARD
+============================================================ */
+
+.barber-selector-card {
+  width: 180px;
+
+  flex:
+    0 1
+    180px;
+
+  min-height: 190px;
+
+  background: white;
+  color: #222;
+
+  border: 1px solid #d7d7d7;
+
+  border-radius: 16px;
+
+  padding: 18px 14px 16px;
+
+  font-family: inherit;
+
+  text-align: center;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.10);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+
+.barber-selector-card:hover {
+  transform: translateY(-4px);
+
+  border-color: #111;
+
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+
+.barber-selector-card:focus-visible {
+  outline: 3px solid #111;
+  outline-offset: 3px;
+}
+
+
+.barber-selector-card h3 {
+  font-size: 21px;
+
+  margin-top: 12px;
+  margin-bottom: 4px;
+}
+
+
+.barber-card-specialty {
+  font-size: 13px;
+
+  line-height: 1.35;
+
+  color: #666;
+}
+
+
+
+/* ============================================================
+   SMALL BARBER PROFILE PHOTO
+============================================================ */
+
+.barber-card-photo {
+  width: 92px;
+  height: 92px;
+
+  margin: 0 auto;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  object-fit: cover;
+
+  border-radius: 50%;
+
+  border: 4px solid white;
+
+  box-shadow:
+    0 2px 10px rgba(0, 0, 0, 0.18);
+}
+
+
+.barber-card-photo.barber-photo-placeholder {
+  background: #111;
+  color: white;
+
+  font-size: 28px;
+  font-weight: bold;
+}
+
+
+
+/* ============================================================
+   BARBER PROFILE POPUP OVERLAY
+============================================================ */
+
+.barber-profile-modal {
+  display: none;
+
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 1100;
+
+  padding: 20px;
+
+  background:
+    rgba(0, 0, 0, 0.78);
+
+  align-items: center;
+  justify-content: center;
+
+  overflow-y: auto;
+}
+
+
+.barber-profile-modal.open {
+  display: flex;
+}
+
+
+
+/* ============================================================
+   BARBER PROFILE POPUP BOX
+============================================================ */
+
+.barber-profile-modal-content {
+  position: relative;
+
+  width: 100%;
+  max-width: 850px;
+
+  max-height: 92vh;
+
+  overflow-y: auto;
+
+  background: white;
+
+  border-radius: 16px;
+
+  padding: 38px;
+
+  box-shadow:
+    0 14px 50px rgba(0, 0, 0, 0.42);
+}
+
+
+
+/* ============================================================
+   CLOSE PROFILE POPUP
+============================================================ */
+
+.close-barber-profile {
+  position: absolute;
+
+  top: 10px;
+  right: 15px;
+
+  z-index: 10;
+
+  background: none;
+  border: none;
+
+  color: #333;
+
+  font-size: 38px;
+  line-height: 1;
+
+  cursor: pointer;
+}
+
+
+.close-barber-profile:hover {
+  color: #000;
+}
+
+
+
+/* ============================================================
+   BARBER PROFILE HEADER
+============================================================ */
+
+.barber-popup-header {
+  display: flex;
+
+  align-items: center;
+
+  gap: 28px;
+
+  padding-right: 30px;
+
+  margin-bottom: 30px;
+}
+
+
+.barber-popup-photo {
+  width: 150px;
+  height: 150px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  object-fit: cover;
+
+  border-radius: 50%;
+
+  border: 5px solid #f2f2f2;
+
+  box-shadow:
+    0 3px 14px rgba(0, 0, 0, 0.18);
+}
+
+
+.barber-popup-photo.barber-photo-placeholder {
+  background: #111;
+  color: white;
+
+  font-size: 44px;
+  font-weight: bold;
+}
+
+
+.barber-popup-info {
+  flex: 1;
+
+  min-width: 0;
+}
+
+
+.barber-popup-info h2 {
+  font-size: 34px;
+
+  margin-bottom: 4px;
+}
+
+
+.barber-popup-tagline {
+  font-size: 18px;
+  font-weight: bold;
+
+  margin-bottom: 8px;
+}
+
+
+.barber-popup-specialties {
+  font-size: 14px;
+
+  color: #444;
+
+  margin-bottom: 12px;
+}
+
+
+.barber-popup-bio {
+  color: #555;
+
+  max-width: 580px;
+}
+
+
+
+/* ============================================================
+   BARBER'S WORK
+============================================================ */
+
+.barber-popup-work {
+  margin-top: 12px;
+}
+
+
+.barber-popup-work h3 {
+  text-align: center;
+
+  font-size: 25px;
+
+  margin-bottom: 18px;
+}
+
+
+
+/* ============================================================
+   BARBER GALLERY
+============================================================ */
+
+.barber-gallery {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, 1fr);
+
+  gap: 14px;
+
+  margin-bottom: 28px;
+}
+
+
+.gallery-item {
+  background: #f4f4f4;
+
+  border-radius: 10px;
+
+  overflow: hidden;
+
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+
+.gallery-item img {
+  display: block;
+
+  width: 100%;
+  height: 210px;
+
+  object-fit: cover;
+}
+
+
+.gallery-item figcaption {
+  padding: 9px;
+
+  text-align: center;
+
+  font-size: 14px;
+  font-weight: bold;
+}
+
+
+.gallery-empty {
+  grid-column: 1 / -1;
+
+  min-height: 150px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  background: #f5f5f5;
+
+  border: 2px dashed #bbb;
+
+  border-radius: 10px;
+
+  padding: 25px;
+
+  color: #666;
+
+  text-align: center;
+}
+
+
+
+/* ============================================================
+   BARBER DEMO PHOTO UPLOAD
+============================================================ */
+
+.gallery-upload-slot {
+  min-width: 0;
+}
+
+
+.gallery-upload-input {
+  display: none;
+}
+
+
+.gallery-upload-empty,
+.gallery-upload-preview {
+  width: 100%;
+  min-height: 249px;
+
+  border-radius: 10px;
+}
+
+
+.gallery-upload-empty {
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  padding: 18px;
+
+  background: #f5f5f5;
+
+  border: 2px dashed #999;
+
+  text-align: center;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+
+.gallery-upload-empty:hover,
+.gallery-upload-empty.drag-over {
+  background: #eeeeee;
+
+  border-color: #111;
+
+  transform: translateY(-2px);
+}
+
+
+.gallery-upload-empty:focus-visible {
+  outline: 3px solid #111;
+
+  outline-offset: 3px;
+}
+
+
+.gallery-upload-plus {
+  width: 42px;
+  height: 42px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  background: #111;
+  color: white;
+
+  border-radius: 50%;
+
+  font-size: 30px;
+  line-height: 1;
+}
+
+
+.gallery-upload-empty strong {
+  display: block;
+
+  font-size: 15px;
+
+  line-height: 1.35;
+}
+
+
+.gallery-upload-empty span {
+  font-size: 13px;
+
+  color: #444;
+}
+
+
+.gallery-upload-empty small {
+  font-size: 11px;
+
+  color: #777;
+}
+
+
+.gallery-upload-preview {
+  overflow: hidden;
+
+  background: #f4f4f4;
+
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+
+.gallery-upload-preview[hidden],
+.gallery-upload-empty[hidden] {
+  display: none;
+}
+
+
+.gallery-upload-preview img {
+  display: block;
+
+  width: 100%;
+  height: 210px;
+
+  object-fit: cover;
+}
+
+
+.gallery-replace-photo {
+  width: 100%;
+  min-height: 39px;
+
+  padding: 9px 12px;
+
+  background: white;
+  color: #111;
+
+  border: none;
+  border-top: 1px solid #ddd;
+
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: bold;
+
+  cursor: pointer;
+}
+
+
+.gallery-replace-photo:hover {
+  background: #111;
+  color: white;
+}
+
+
+.gallery-replace-photo:focus-visible {
+  outline: 3px solid #111;
+
+  outline-offset: -3px;
+}
+
+
+/* ============================================================
+   BOOK WITH BARBER
+============================================================ */
+
+.barber-popup-book-button {
+  display: block;
+
+  width: 100%;
+  max-width: 380px;
+
+  margin: 0 auto;
+
+  background: #111;
+  color: white;
+
+  border-color: #111;
+}
+
+
+.barber-popup-book-button:hover {
+  background: white;
+  color: #111;
+}
+
+
+
+/* ============================================================
+   CONTACT
+============================================================ */
+
+#contact {
+  text-align: center;
+}
+
+
+#contact p {
+  font-size: 18px;
+
+  margin-bottom: 5px;
+}
+
+
+#contact a {
+  color: #222;
+
+  font-weight: bold;
+}
+
+
+#shop-hours {
+  margin-top: 30px;
+}
+
+
+#shop-hours h3 {
+  font-size: 23px;
+
+  margin-bottom: 10px;
+}
+
+
+#shop-hours p {
+  font-size: 16px;
+}
+
+
+
+/* ============================================================
+   BOOKING MODAL OVERLAY
+============================================================ */
+
+.booking-modal {
+  display: none;
+
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 1200;
+
+  background:
+    rgba(0, 0, 0, 0.78);
+
+  padding: 20px;
+
+  align-items: center;
+  justify-content: center;
+
+  overflow-y: auto;
+}
+
+
+.booking-modal.open {
+  display: flex;
+}
+
+
+
+/* ============================================================
+   BOOKING POPUP
+============================================================ */
+
+.booking-modal-content {
+  position: relative;
+
+  width: 100%;
+  max-width: 560px;
+
+  max-height: 92vh;
+
+  overflow-y: auto;
+
+  background: white;
+  color: #222;
+
+  padding: 35px;
+
+  border-radius: 14px;
+
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+
+.booking-modal-content h2 {
+  text-align: center;
+
+  font-size: 30px;
+
+  margin-bottom: 20px;
+}
+
+
+.booking-modal-content > label {
+  display: block;
+
+  font-weight: bold;
+
+  margin-top: 8px;
+  margin-bottom: 6px;
+}
+
+
+.booking-modal-content > select {
+  width: 100%;
+
+  padding: 13px;
+
+  border: 1px solid #bbb;
+
+  border-radius: 6px;
+
+  font-size: 16px;
+
+  background: white;
+  color: #222;
+}
+
+
+.booking-with {
+  text-align: center;
+
+  margin: 18px 0 25px;
+
+  font-size: 18px;
+}
+
+
+
+/* ============================================================
+   BOOKING CLOSE BUTTON
+============================================================ */
+
+.close-booking {
+  position: absolute;
+
+  top: 10px;
+  right: 15px;
+
+  background: none;
+  border: none;
+
+  font-size: 34px;
+  line-height: 1;
+
+  cursor: pointer;
+
+  color: #444;
+}
+
+
+.close-booking:hover {
+  color: #000;
+}
+
+
+
+/* ============================================================
+   BOOKING FORM
+============================================================ */
+
+.booking-form {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 10px;
+}
+
+
+.booking-form label {
+  font-weight: bold;
+
+  margin-top: 8px;
+}
+
+
+.booking-form select,
+.booking-form input[type="date"],
+.booking-form input[type="text"],
+.booking-form input[type="tel"] {
+  width: 100%;
+
+  padding: 13px;
+
+  border: 1px solid #bbb;
+
+  border-radius: 6px;
+
+  font-size: 16px;
+
+  background: white;
+  color: #222;
+}
+
+
+.booking-form select:focus,
+.booking-form input:focus,
+.booking-modal-content > select:focus {
+  outline: 2px solid #222;
+  outline-offset: 1px;
+}
+
+
+
+/* ============================================================
+   SMS CONSENT
+============================================================ */
+
+.sms-consent {
+  display: flex;
+
+  align-items: flex-start;
+
+  gap: 10px;
+
+  margin: 14px 0 5px;
+
+  padding: 14px;
+
+  border: 1px solid #ccc;
+
+  border-radius: 7px;
+
+  background: #f8f8f8;
+
+  font-weight: normal !important;
+
+  cursor: pointer;
+}
+
+
+.sms-consent input {
+  width: auto;
+
+  margin-top: 5px;
+
+  flex-shrink: 0;
+
+  transform: scale(1.2);
+}
+
+
+.sms-consent span {
+  font-size: 14px;
+
+  line-height: 1.5;
+}
+
+
+.sms-policy-links {
+  text-align: center;
+
+  font-size: 13px;
+
+  margin-bottom: 5px;
+}
+
+
+.sms-policy-links a {
+  color: #222;
+
+  font-weight: bold;
+}
+
+
+
+/* ============================================================
+   CONFIRM BOOKING
+============================================================ */
+
+#confirm-booking {
+  width: 100%;
+
+  margin-top: 10px;
+
+  background: #111;
+  color: white;
+
+  border-color: #111;
+}
+
+
+#confirm-booking:hover {
+  background: white;
+  color: #111;
+}
+
+
+
+/* ============================================================
+   CONFIRMATION
+============================================================ */
+
+#confirmation-message {
+  margin-top: 20px;
+}
+
+
+.booking-confirmed,
+.booking-cancelled {
+  background: #f3f3f3;
+
+  border: 2px solid #222;
+
+  border-radius: 8px;
+
+  padding: 20px;
+
+  text-align: center;
+}
+
+
+.booking-confirmed h3,
+.booking-cancelled h3 {
+  font-size: 23px;
+
+  margin-bottom: 12px;
+}
+
+
+.booking-confirmed p {
+  margin-bottom: 7px;
+}
+
+
+.sms-demo-message {
+  margin-top: 15px;
+
+  font-weight: bold;
+}
+
+
+
+/* ============================================================
+   CANCEL BUTTON
+============================================================ */
+
+.cancel-appointment {
+  margin-top: 18px;
+
+  background: white;
+  color: #222;
+}
+
+
+.cancel-appointment:hover {
+  background: #222;
+  color: white;
+}
+
+
+
+/* ============================================================
+   ERROR MESSAGE
+============================================================ */
+
+.booking-error {
+  padding: 12px;
+
+  border: 2px solid #222;
+
+  border-radius: 6px;
+
+  font-weight: bold;
+
+  text-align: center;
+}
+
+
+
+/* ============================================================
+   FOOTER
+============================================================ */
+
+footer {
+  background: #111;
+  color: white;
+
+  text-align: center;
+
+  padding: 25px;
+}
+
+
+footer p {
+  margin: 3px 0;
+}
+
+
+footer p:first-child {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+
+
+/* ============================================================
+   TABLET
+============================================================ */
+
+@media (max-width: 900px) {
+
+  header {
+    justify-content: center;
+
+    text-align: center;
+  }
+
+
+  nav {
+    width: 100%;
+
+    justify-content: center;
+
+    flex-wrap: wrap;
+  }
+
+
+  .services {
+    grid-template-columns:
+      repeat(2, 1fr);
+  }
+
+
+  .barber-gallery {
+    grid-template-columns:
+      repeat(2, 1fr);
+  }
+
+}
+
+
+
+/* ============================================================
+   PHONE
+============================================================ */
+
+@media (max-width: 600px) {
+
+  header {
+    padding: 18px 15px;
+  }
+
+
+  header h1 {
+    width: 100%;
+
+    font-size: 21px;
+  }
+
+
+  nav {
+    gap: 15px;
+
+    font-size: 14px;
+  }
+
+
+  .hero {
+    min-height: 420px;
+
+    padding: 95px 15px;
+  }
+
+
+  .hero h2 {
+    font-size: 32px;
+
+    letter-spacing: 2px;
+  }
+
+
+  .hero p {
+    font-size: 17px;
+  }
+
+
+  section {
+    padding: 55px 18px;
+  }
+
+
+  .services {
+    grid-template-columns: 1fr;
+  }
+
+
+  .barbers-section {
+    padding-top: 24px;
+    padding-bottom: 30px;
+  }
+
+
+  .barbers-section > h2 {
+    font-size: 24px;
+
+    margin-bottom: 18px;
+  }
+
+
+  .barber-selector {
+    gap: 14px;
+  }
+
+
+  .barber-selector-card {
+    width: 135px;
+
+    flex-basis: 135px;
+
+    min-height: 170px;
+
+    padding: 14px 8px;
+  }
+
+
+  .barber-card-photo {
+    width: 76px;
+    height: 76px;
+  }
+
+
+  .barber-card-photo.barber-photo-placeholder {
+    font-size: 23px;
+  }
+
+
+  .barber-selector-card h3 {
+    font-size: 18px;
+  }
+
+
+  .barber-card-specialty {
+    font-size: 11px;
+  }
+
+
+  .barber-profile-modal {
+    padding: 10px;
+  }
+
+
+  .barber-profile-modal-content {
+    padding: 34px 18px 24px;
+  }
+
+
+  .barber-popup-header {
+    flex-direction: column;
+
+    text-align: center;
+
+    padding-right: 0;
+
+    gap: 16px;
+  }
+
+
+  .barber-popup-photo {
+    width: 125px;
+    height: 125px;
+  }
+
+
+  .barber-popup-photo.barber-photo-placeholder {
+    font-size: 36px;
+  }
+
+
+  .barber-popup-info h2 {
+    font-size: 29px;
+  }
+
+
+  .barber-gallery {
+    grid-template-columns:
+      repeat(2, 1fr);
+  }
+
+
+  .gallery-item img {
+    height: 150px;
+  }
+
+
+  .gallery-upload-empty,
+  .gallery-upload-preview {
+    min-height: 189px;
+  }
+
+
+  .gallery-upload-preview img {
+    height: 150px;
+  }
+
+
+  .booking-modal {
+    padding: 10px;
+  }
+
+
+  .booking-modal-content {
+    padding: 30px 20px 25px;
+  }
+
+
+  .booking-modal-content h2 {
+    font-size: 25px;
+  }
+
+}
+
+
+
+/* ============================================================
+   VERY SMALL PHONES
+============================================================ */
+
+@media (max-width: 350px) {
+
+  .barber-selector-card {
+    width: 125px;
+
+    flex-basis: 125px;
+  }
+
+
+  .barber-gallery {
+    grid-template-columns: 1fr;
+  }
+
+
+  .gallery-item img {
+    height: 220px;
+  }
+
+
+  .gallery-upload-empty,
+  .gallery-upload-preview {
+    min-height: 259px;
+  }
+
+
+  .gallery-upload-preview img {
+    height: 220px;
+  }
+}
