@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&display=swap');
+
 /* ============================================================
    BUSINESS PRO BARBER TEMPLATE
    CUSTOMER WEBSITE
@@ -21,11 +23,31 @@ html {
 
 
 body {
-  font-family: Arial, Helvetica, sans-serif;
+    font-family: "Cormorant Garamond", Georgia, "Times New Roman", serif;
   background: #f5f5f5;
   color: #222;
   line-height: 1.6;
 }
+
+/* ============================================================
+   VILLAGE BARBER SIGN-INSPIRED DISPLAY FONT
+============================================================ */
+
+header h1,
+section h2,
+.service-card h3,
+.barber-selector-card h3,
+.barber-popup-info h2,
+.barber-popup-work h3,
+#shop-hours h3,
+.booking-modal-content h2,
+.booking-confirmed h3,
+.booking-cancelled h3,
+footer p:first-child {
+  font-family: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+  font-weight: 700;
+}
+
 
 
 
@@ -34,8 +56,16 @@ body {
 ============================================================ */
 
 header {
+  
+  position: relative;
   background: #111;
   color: white;
+
+  border-top: 4px solid #7ec8e3;
+  border-left: 4px solid #7ec8e3;
+  border-right: 4px solid #7ec8e3;
+  border-left-width: 10px;
+  border-right-width: 10px;
 
   padding: 20px 7%;
 
@@ -49,9 +79,55 @@ header {
 }
 
 
+header::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  pointer-events: none;
+
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 18' preserveAspectRatio='none'%3E%3Cpath fill='%237ec8e3' d='M0 0H1000V8 C930 7 880 12 810 9 S680 13 610 9 S470 14 390 10 S245 13 165 9 S70 12 0 9Z'/%3E%3Cpath fill='%237ec8e3' opacity='.45' d='M0 8 C90 10 145 14 215 11 S350 15 430 11 S575 16 655 11 S815 15 1000 10 V13 C900 16 835 12 760 15 S610 13 530 16 S365 13 285 16 S120 12 0 15Z'/%3E%3C/svg%3E"),
+    linear-gradient(#7ec8e3, #7ec8e3),
+    linear-gradient(#7ec8e3, #7ec8e3),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 120' preserveAspectRatio='none'%3E%3Cg fill='none' stroke='%237ec8e3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 2 C0 28 8 51 3 75 S7 104 4 118 M996 2 C1000 28 992 51 997 75 S993 104 996 118' stroke-width='7' opacity='.80'/%3E%3Cpath d='M8 1 C4 31 11 61 6 91 S10 109 7 118 M992 1 C996 31 989 61 994 91 S990 109 993 118' stroke-width='2.5' opacity='.34' stroke-dasharray='155 9 92 6 185 12'/%3E%3C/g%3E%3C/svg%3E");
+  background-size:
+    100% 16px,
+    8px 100%,
+    8px 100%,
+    100% 100%;
+  background-position:
+    top left,
+    top left,
+    top right,
+    center;
+  background-repeat: no-repeat;
+
+  filter: drop-shadow(0 0 1.5px rgba(126, 200, 227, 0.22));
+}
+
+
+header::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  background:
+    linear-gradient(135deg, #7ec8e3 0 50%, transparent 51%) top left / 28px 28px no-repeat,
+    linear-gradient(225deg, #7ec8e3 0 50%, transparent 51%) top right / 28px 28px no-repeat;
+}
+header > * {
+  position: relative;
+  z-index: 3;
+}
 header h1 {
-  font-size: 24px;
-  letter-spacing: 2px;
+  font-size: 28px;
+  letter-spacing: 1px;
+  line-height: 1;
 }
 
 
@@ -79,6 +155,12 @@ nav a:hover {
    BUTTONS
 ============================================================ */
 
+button,
+input,
+select,
+textarea {
+  font-family: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+}
 .book-button,
 #confirm-booking,
 .cancel-appointment {
@@ -135,6 +217,13 @@ header .book-button:hover {
 ============================================================ */
 
 .hero {
+  position: relative;
+  overflow: hidden;
+
+  border-left: 4px solid #7ec8e3;
+  border-right: 4px solid #7ec8e3;
+    border-bottom: 10px solid #7ec8e3;
+
   min-height: 500px;
 
   background-image:
@@ -160,7 +249,53 @@ header .book-button:hover {
 }
 
 
+.hero::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  pointer-events: none;
+
+  background-image:
+    linear-gradient(#7ec8e3, #7ec8e3),
+    linear-gradient(#7ec8e3, #7ec8e3),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 18' preserveAspectRatio='none'%3E%3Cpath fill='%237ec8e3' d='M0 18H1000V10 C930 11 880 6 810 9 S680 5 610 9 S470 4 390 8 S245 5 165 9 S70 6 0 9Z'/%3E%3Cpath fill='%237ec8e3' opacity='.45' d='M0 10 C90 8 145 4 215 7 S350 3 430 7 S575 2 655 7 S815 3 1000 8 V5 C900 2 835 6 760 3 S610 5 530 2 S365 5 285 2 S120 6 0 3Z'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 500' preserveAspectRatio='none'%3E%3Cg fill='none' stroke='%237ec8e3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 0 C0 65 8 125 3 190 S8 320 3 385 S7 455 4 500 M996 0 C1000 65 992 125 997 190 S992 320 997 385 S993 455 996 500' stroke-width='7' opacity='.80'/%3E%3Cpath d='M8 0 C4 72 11 145 6 218 S11 365 6 500 M992 0 C996 72 989 145 994 218 S989 365 994 500' stroke-width='2.5' opacity='.34' stroke-dasharray='130 8 76 5 165 11'/%3E%3C/g%3E%3C/svg%3E");
+  background-size:
+    8px 100%,
+    8px 100%,
+    100% 16px,
+    100% 100%;
+  background-position:
+    top left,
+    top right,
+    bottom left,
+    center;
+  background-repeat: no-repeat;
+
+  filter: drop-shadow(0 0 1.5px rgba(126, 200, 227, 0.22));
+}
+
+
+.hero::after {
+    content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  background:
+    linear-gradient(45deg, #7ec8e3 0 50%, transparent 51%) bottom left / 28px 28px no-repeat,
+    linear-gradient(315deg, #7ec8e3 0 50%, transparent 51%) bottom right / 28px 28px no-repeat;
+}
+
+
+
 .hero-content {
+  position: relative;
+  z-index: 3;
   max-width: 850px;
 }
 
@@ -240,8 +375,14 @@ section h2 {
 
   border-radius: 10px;
 
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+
   box-shadow:
-    0 3px 12px rgba(0, 0, 0, 0.10);
+                0 6px 14px rgba(126, 200, 227, 0.34),
+    0 10px 18px rgba(0, 0, 0, 0.12);
 }
 
 
@@ -331,7 +472,8 @@ section h2 {
   cursor: pointer;
 
   box-shadow:
-    0 4px 14px rgba(0, 0, 0, 0.10);
+        0 6px 14px rgba(126, 200, 227, 0.34),
+    0 8px 16px rgba(0, 0, 0, 0.10);
 
   transition:
     transform 0.2s ease,
@@ -661,7 +803,7 @@ section h2 {
   align-items: center;
   justify-content: center;
 
-  background: #f5f5f5;
+      background: #f5f5f5;
 
   border: 2px dashed #bbb;
 
@@ -909,6 +1051,188 @@ section h2 {
   font-size: 16px;
 }
 
+
+
+/* ============================================================
+   BUSINESS PRO LOCAL PLANS
+============================================================ */
+
+.business-pro-plans {
+  background: #111;
+  color: white;
+
+  text-align: center;
+
+  border-top: 10px solid #7ec8e3;
+  border-bottom: 10px solid #7ec8e3;
+}
+
+
+.business-pro-plan-heading {
+  width: 100%;
+  max-width: 850px;
+  margin: 0 auto;
+  padding: 0;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  text-align: center;
+}
+
+
+.business-pro-plan-heading h2,
+.business-pro-eyebrow,
+.business-pro-plan-heading > p:not(.business-pro-eyebrow) {
+  width: 100%;
+  text-align: center;
+}
+
+
+.business-pro-plan-heading > p:not(.business-pro-eyebrow) {
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 24px;
+}
+
+
+.business-pro-eyebrow {
+  color: #7ec8e3;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  letter-spacing: 2px;
+
+  margin-bottom: 8px;
+}
+
+
+.business-pro-plan-heading h2 {
+  color: white;
+
+  margin-bottom: 12px;
+}
+
+
+.business-pro-plan-heading > p:not(.business-pro-eyebrow) {
+  font-size: 18px;
+}
+
+
+.business-pro-plan-grid {
+  width: 100%;
+  max-width: 1100px;
+
+  margin: 0 auto;
+
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+
+  gap: 24px;
+}
+
+
+.business-pro-plan-card {
+  background: white;
+  color: #222;
+
+  padding: 32px 24px;
+
+  border-radius: 14px;
+  border: 3px solid #7ec8e3;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 12px;
+
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.30);
+}
+
+
+.business-pro-plan-card h3 {
+  font-size: 28px;
+}
+
+
+.business-pro-plan-price {
+  font-size: 27px;
+  font-weight: 700;
+}
+
+
+.business-pro-monthly-price {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+
+.business-pro-ad-info {
+  margin-top: auto;
+
+  padding: 16px;
+
+  background: #f5f5f5;
+
+  border-radius: 9px;
+  border: 1px solid #ccc;
+}
+
+
+.business-pro-ad-info strong {
+  display: block;
+
+  font-size: 18px;
+
+  margin-bottom: 5px;
+}
+
+
+.business-pro-join-button {
+  display: block;
+
+  margin-top: 10px;
+
+  padding: 13px 20px;
+
+  background: #111;
+  color: white;
+
+  border: 2px solid #111;
+  border-radius: 7px;
+
+  text-decoration: none;
+
+  font-size: 18px;
+  font-weight: 700;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+
+.business-pro-join-button:hover {
+  background: white;
+  color: #111;
+
+  transform: translateY(-2px);
+}
+
+
+.business-pro-ad-note {
+  max-width: 900px;
+
+  margin: 30px auto 0;
+
+  font-size: 15px;
+  line-height: 1.5;
+}
 
 
 /* ============================================================
@@ -1314,6 +1638,13 @@ footer p:first-child {
       repeat(2, 1fr);
   }
 
+
+  .business-pro-plan-grid {
+    grid-template-columns: 1fr;
+
+    max-width: 650px;
+  }
+
 }
 
 
@@ -1343,12 +1674,22 @@ footer p:first-child {
   }
 
 
-  .hero {
-    min-height: 420px;
-
-    padding: 95px 15px;
+    .hero {
+    min-height: 0;
+    padding: 0;
+    display: block;
+    background-image: none !important;
+    background: #111 !important;
   }
 
+  .hero-mobile-image {
+    display: block;
+    width: 88%;
+    max-width: 360px;
+    height: auto;
+    margin: 0 auto;
+    object-fit: contain;
+  } 
 
   .hero h2 {
     font-size: 32px;
@@ -1478,6 +1819,43 @@ footer p:first-child {
 
   .gallery-upload-preview img {
     height: 150px;
+  }
+
+
+  .business-pro-plan-grid {
+    grid-template-columns: 1fr;
+  }
+
+
+  .business-pro-plan-card {
+    padding: 26px 18px;
+  }
+
+
+  .business-pro-plans {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+
+  .business-pro-plan-heading {
+    width: 100%;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+
+  .business-pro-plan-heading h2,
+  .business-pro-eyebrow,
+  .business-pro-plan-heading > p:not(.business-pro-eyebrow) {
+    width: 100%;
+    text-align: center;
+  }
+
+
+  .business-pro-plan-heading > p:not(.business-pro-eyebrow) {
+    max-width: 320px;
   }
 
 
