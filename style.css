@@ -1681,7 +1681,7 @@ footer p:first-child {
     padding: 0;
     display: block;
     background-image: none !important;
-    background: #111 !important;
+        background: transparent !important;
   }
   header,
   .hero {
