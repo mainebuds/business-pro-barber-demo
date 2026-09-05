@@ -1696,8 +1696,8 @@ footer p:first-child {
   }
   .hero-mobile-image {
     display: block;
-    width: 88%;
-    max-width: 360px;
+        width: 100%;
+    max-width: none;
     height: auto;
     margin: 0 auto;
     object-fit: contain;
