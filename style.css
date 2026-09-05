@@ -1683,7 +1683,17 @@ footer p:first-child {
     background-image: none !important;
     background: #111 !important;
   }
+  header,
+  .hero {
+    border: none;
+  }
 
+  header::before,
+  header::after,
+  .hero::before,
+  .hero::after {
+    display: none;
+  }
   .hero-mobile-image {
     display: block;
     width: 88%;
