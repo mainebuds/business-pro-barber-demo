@@ -88,6 +88,22 @@
         width: min(100%, 320px);
         font-size: 18px;
       }
+
+      header,
+      .hero {
+        border: 0 !important;
+        outline: 0 !important;
+        box-shadow: none !important;
+      }
+
+      header::before,
+      header::after,
+      .hero::before,
+      .hero::after {
+        display: none !important;
+        content: none !important;
+        background: none !important;
+      }
     }
   </style>
 
