@@ -326,7 +326,9 @@ header .book-button:hover {
   background: white;
   color: #111;
 }
-
+.hero-mobile-image {
+  display: none;
+}
 
 
 /* ============================================================
