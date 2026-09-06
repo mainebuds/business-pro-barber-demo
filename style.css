@@ -399,6 +399,12 @@ section h2 {
 }
 
 
+.service-card-icon,
+.service-card-arrow {
+  display: none;
+}
+
+
 
 /* ============================================================
    MEET OUR BARBERS
@@ -1725,6 +1731,86 @@ footer p:first-child {
   }
 
 
+  .service-card {
+    position: relative;
+    min-height: 112px;
+    padding: 22px 54px 22px 96px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    transition:
+      transform 0.18s ease,
+      box-shadow 0.18s ease;
+  }
+
+  .service-card:active {
+    transform: translateY(-2px) scale(0.985);
+    box-shadow:
+      0 4px 10px rgba(126, 200, 227, 0.28),
+      0 6px 12px rgba(0, 0, 0, 0.14);
+  }
+
+  .service-card:focus-visible {
+    outline: 3px solid #7ec8e3;
+    outline-offset: 3px;
+  }
+
+  .service-card h3 {
+    margin-bottom: 4px;
+    font-size: 22px;
+    line-height: 1.1;
+  }
+
+  .service-card p {
+    font-size: 21px;
+    line-height: 1.1;
+  }
+
+  .service-card-icon {
+    display: block;
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    width: 64px;
+    height: 64px;
+    transform: translateY(-50%);
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    pointer-events: none;
+  }
+
+  .service-card-arrow {
+    display: block;
+    position: absolute;
+    right: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #555;
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  .service-card-icon[data-service-icon="haircut"] {
+    background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA3MiA3MiI+CjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzExMSIgc3Ryb2tlLXdpZHRoPSIyLjQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+CjxwYXRoIGQ9Ik0yNCA1NGM3LTMgMTEtOCAxMi0xNSAxLTUtMS05LTQtMTIiLz4KPHBhdGggZD0iTTMwIDIwYzUtNiAxNC03IDE5LTIgMyAzIDQgNyAzIDExLTItMi01LTQtOC00LTUgMC05IDMtMTMgNiIvPgo8cGF0aCBkPSJNMzMgMzFjLTIgNS0xIDExIDMgMTUgMyAzIDcgNCAxMSAyIi8+CjxwYXRoIGQ9Ik00NyAyOGMyIDIgMyA1IDIgOC0xIDItMyA0LTUgNSIvPgo8cGF0aCBkPSJNMjkgNTZjNyA0IDE3IDQgMjQtMSIvPgo8cGF0aCBkPSJNMTEgMjBsMTcgMTdNMjggMjBMMTEgMzciLz4KPGNpcmNsZSBjeD0iOSIgY3k9IjE4IiByPSI1Ii8+PGNpcmNsZSBjeD0iOSIgY3k9IjM5IiByPSI1Ii8+CjxwYXRoIGQ9Ik00MyAxOGMtNCAwLTcgMS0xMCA0IDEtNiA1LTEwIDEyLTExIi8+CjwvZz48L3N2Zz4=");
+  }
+
+  .service-card-icon[data-service-icon="beard-trim"] {
+    background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA3MiA3MiI+CjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzExMSIgc3Ryb2tlLXdpZHRoPSIyLjQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+CjxwYXRoIGQ9Ik0yMSAyOGMwLTEwIDYtMTcgMTUtMTdzMTUgNyAxNSAxNyIvPgo8cGF0aCBkPSJNMjUgMjVjMy01IDctNyAxMS03czggMiAxMSA3Ii8+CjxwYXRoIGQ9Ik0yMiAzMWMwIDE4IDUgMjkgMTQgMzEgOS0yIDE0LTEzIDE0LTMxIi8+CjxwYXRoIGQ9Ik0yNSAzNGMyIDAgNCAxIDYgMyAyLTIgNC0zIDUtMyAyIDAgNCAxIDYgMyAyLTIgNC0zIDUtMyIvPgo8cGF0aCBkPSJNMjkgNDJjMiAyIDQgMyA3IDNzNS0xIDctMyIvPgo8cGF0aCBkPSJNMzEgNTBjMyAyIDcgMiAxMCAwIi8+CjxwYXRoIGQ9Ik0yNyAyOWg1TTQwIDI5aDUiLz4KPHBhdGggZD0iTTE3IDE5YzItNSA2LTkgMTEtMTFNNTUgMTljLTItNS02LTktMTEtMTEiLz4KPC9nPjwvc3ZnPg==");
+  }
+
+  .service-card-icon[data-service-icon="haircut-beard"] {
+    background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA3MiA3MiI+CjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzExMSIgc3Ryb2tlLXdpZHRoPSIyLjQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+CjxwYXRoIGQ9Ik0yOSAxN2M1LTYgMTUtNiAyMCAwIDQgNSA0IDEyIDEgMTciLz4KPHBhdGggZD0iTTMxIDIyYzQtNCA5LTYgMTQtNCAzIDEgNSAzIDcgNiIvPgo8cGF0aCBkPSJNMzEgMjhjLTIgOSAxIDIwIDkgMjcgOC03IDExLTE4IDktMjciLz4KPHBhdGggZD0iTTM0IDM0YzIgMCA0IDEgNiAzIDItMiA0LTMgNi0zIi8+CjxwYXRoIGQ9Ik0zNiA0M2MzIDIgNiAyIDkgMCIvPgo8cGF0aCBkPSJNMTMgMjRsMTUgMTVNMjggMjRMMTMgMzkiLz4KPGNpcmNsZSBjeD0iMTEiIGN5PSIyMiIgcj0iNC41Ii8+PGNpcmNsZSBjeD0iMTEiIGN5PSI0MSIgcj0iNC41Ii8+CjxwYXRoIGQ9Ik0yNCA1OGM5IDQgMjMgNCAzMi0xIi8+CjwvZz48L3N2Zz4=");
+  }
+
+  .service-card-icon[data-service-icon="kids-cut"] {
+    background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA3MiA3MiI+CjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzExMSIgc3Ryb2tlLXdpZHRoPSIyLjQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+CjxwYXRoIGQ9Ik0yNCAyOWMwLTEwIDYtMTcgMTUtMTcgOCAwIDE0IDYgMTQgMTUiLz4KPHBhdGggZD0iTTI1IDIzYzMtNiA4LTkgMTUtOSA1IDAgMTAgMiAxMyA3LTQtMi04LTItMTItMS01IDEtOSA0LTEzIDgiLz4KPHBhdGggZD0iTTI3IDMwYy0xIDkgMyAxOCAxMSAyMiA4LTQgMTItMTMgMTEtMjIiLz4KPHBhdGggZD0iTTMxIDM0aDNNNDIgMzRoMyIvPgo8cGF0aCBkPSJNMzUgNDJjMiAxIDQgMSA2IDAiLz4KPHBhdGggZD0iTTIxIDU3YzEwIDUgMjQgNSAzNCAwIi8+CjxwYXRoIGQ9Ik0xMyAxN2gxMU0xNCAxM2gxMk0xNiA5aDExIi8+CjwvZz48L3N2Zz4=");
+  }
+
+
   .barbers-section {
     padding-top: 24px;
     padding-bottom: 30px;
@@ -1888,6 +1974,16 @@ footer p:first-child {
 }
 
 
+
+
+@media (max-width: 600px) and (hover: hover) and (pointer: fine) {
+  .service-card:hover {
+    transform: translateY(-4px);
+    box-shadow:
+      0 8px 18px rgba(126, 200, 227, 0.38),
+      0 12px 22px rgba(0, 0, 0, 0.16);
+  }
+}
 
 /* ============================================================
    VERY SMALL PHONES
