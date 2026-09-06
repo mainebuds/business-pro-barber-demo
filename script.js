@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const config = window.SHOP_CONFIG;
 
-  if (!config) {a
+    if (!config) {
     console.error(
       "SHOP_CONFIG was not found. Make sure shop-config.js loads before script.js."
     );
