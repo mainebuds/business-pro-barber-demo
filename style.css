@@ -1976,7 +1976,7 @@ footer p:first-child {
 
 
 
-@media (max-width: 600px) and (hover: hover) and (pointer: fine) {
+@media (max-width: 600px) {
   .service-card:hover {
     transform: translateY(-4px);
     box-shadow:
