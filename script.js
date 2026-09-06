@@ -286,39 +286,81 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function buildServices() {
 
-    if (!servicesList) {
-      return;
-    }
-
-
-    servicesList.innerHTML = "";
-
-
-    services.forEach(service => {
-
-      const card =
-        document.createElement("div");
-
-      card.className =
-        "service-card";
-
-
-      card.innerHTML = `
-        <h3>
-          ${escapeHTML(service.name)}
-        </h3>
-
-        <p>
-          ${formatPrice(service.price)}
-        </p>
-      `;
-
-
-      servicesList.appendChild(card);
-
-    });
-
+  if (!servicesList) {
+    return;
   }
+
+  servicesList.innerHTML = "";
+
+  services.forEach(service => {
+
+    const card =
+      document.createElement("div");
+
+    card.className =
+      "service-card";
+
+    card.setAttribute(
+      "role",
+      "button"
+    );
+
+    card.setAttribute(
+      "tabindex",
+      "0"
+    );
+
+    card.dataset.serviceId =
+      service.id;
+
+    card.innerHTML = `
+      <div class="service-card-icon" data-service-icon="${escapeAttribute(service.id)}"></div>
+
+      <h3>
+        ${escapeHTML(service.name)}
+      </h3>
+
+      <p>
+        ${formatPrice(service.price)}
+      </p>
+
+      <span class="service-card-arrow">
+        ›
+      </span>
+    `;
+
+    const openServiceBooking = () => {
+      openBookingModal(
+        "",
+        service.id
+      );
+    };
+
+    card.addEventListener(
+      "click",
+      openServiceBooking
+    );
+
+    card.addEventListener(
+      "keydown",
+      event => {
+
+        if (
+          event.key === "Enter" ||
+          event.key === " "
+        ) {
+          event.preventDefault();
+          openServiceBooking();
+        }
+
+      }
+    );
+
+    servicesList.appendChild(card);
+
+  });
+
+}
 
 
   // ============================================================
@@ -1425,9 +1467,14 @@ document.addEventListener("DOMContentLoaded", () => {
   // OPEN BOOKING
   // ============================================================
 
-  function openBookingModal(
-    requestedBarberId
-  ) {
+ function openBookingModal(
+  requestedBarberId,
+  requestedServiceId = ""
+) {
+
+  bookingModal.dataset.requestedServiceId =
+    requestedServiceId;
+  
 
     confirmationMessage.innerHTML =
       "";
@@ -1564,6 +1611,19 @@ document.addEventListener("DOMContentLoaded", () => {
     buildServiceSelect(
       barber
     );
+        const requestedServiceId =
+      bookingModal.dataset.requestedServiceId || "";
+
+    if (
+      requestedServiceId &&
+      Array.from(serviceSelect.options).some(
+        option =>
+          option.value === requestedServiceId
+      )
+    ) {
+      serviceSelect.value =
+        requestedServiceId;
+    }
 
 
     updateAvailableTimes();
