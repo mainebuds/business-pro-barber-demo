@@ -1,3 +1,4 @@
+// TEST 2 — card first, then PAY NOW or PAY AT STORE, with manage links
 document.addEventListener("DOMContentLoaded", () => {
 
   // ============================================================
@@ -7,7 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const config = window.SHOP_CONFIG;
 
-    if (!config) {
+  if (!config) {
     console.error(
       "SHOP_CONFIG was not found. Make sure shop-config.js loads before script.js."
     );
@@ -15,29 +16,53 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   const shop = config.shop || {};
-  const services = config.services || [];
-  const barbers = config.barbers || [];
+  const services = Array.isArray(config.services)
+    ? config.services
+    : [];
+  const profiles = Array.isArray(config.barbers)
+    ? config.barbers
+    : [];
   const bookingSettings = config.booking || {};
   const smsSettings = config.sms || {};
 
+  const bookableBarbers = profiles.filter(
+    profile =>
+      profile.profileType !== "business-pro-local" &&
+      Array.isArray(profile.serviceIds) &&
+      profile.serviceIds.length > 0
+  );
+
   const APPOINTMENT_LENGTH =
-    bookingSettings.appointmentLengthMinutes || 30;
+    Number(bookingSettings.appointmentLengthMinutes) || 30;
 
   const DAYS_AVAILABLE =
-    bookingSettings.daysAvailableInAdvance || 365;
+    Number(bookingSettings.daysAvailableInAdvance) || 365;
 
   const STORAGE_KEY =
     bookingSettings.storageKey ||
-    "businessProBarberBookings";
+    "businessProProfessionalBarberTemplateBookings";
+
+  // Shared with the Business Pro Professional Owner Interface.
+  const TIME_OFF_STORAGE_KEY =
+    "businessProProfessionalBarberTemplateTimeOff";
 
   const SMS_SERVER_URL =
     smsSettings.serverUrl || "";
 
-  const BARBER_PHOTO_DB_NAME =
-    "businessProBarberDemoUploads";
+  const APPOINTMENT_CHECKOUT_URL =
+    "https://village-barber-sms.onrender.com/create-appointment-checkout-session";
 
-  const BARBER_PHOTO_STORE_NAME =
-    "barberPhotos";
+  const APPOINTMENT_STATUS_URL =
+    "https://village-barber-sms.onrender.com/appointment-checkout-status";
+
+  const APPOINTMENT_NOTIFICATION_URL =
+    "https://village-barber-sms.onrender.com/send-paid-appointment-notifications";
+
+  const PHOTO_DB_NAME =
+    "businessProBarberTemplateUploads";
+
+  const PHOTO_STORE_NAME =
+    "profilePhotos";
 
 
   // ============================================================
@@ -77,24 +102,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const footerShopName =
     document.getElementById("footer-shop-name");
 
-
-  // ============================================================
-  // BARBER PROFILE POPUP
-  // ============================================================
-
-  const barberProfileModal =
+  const profileModal =
     document.getElementById("barber-profile-modal");
 
-  const barberProfileContent =
+  const profileContent =
     document.getElementById("barber-profile-content");
 
-  const closeBarberProfileButton =
+  const closeProfileButton =
     document.getElementById("close-barber-profile");
-
-
-  // ============================================================
-  // BOOKING POPUP
-  // ============================================================
 
   const bookingModal =
     document.getElementById("booking-modal");
@@ -117,6 +132,24 @@ document.addEventListener("DOMContentLoaded", () => {
   const dateInput =
     document.getElementById("appointment-date");
 
+  const bookingDateCalendar =
+    document.getElementById("booking-date-calendar");
+
+  const bookingDateGrid =
+    document.getElementById("booking-date-grid");
+
+  const bookingDateMonthLabel =
+    document.getElementById("booking-date-month-label");
+
+  const bookingDatePrev =
+    document.getElementById("booking-date-prev");
+
+  const bookingDateNext =
+    document.getElementById("booking-date-next");
+
+  const bookingDateNote =
+    document.getElementById("booking-date-note");
+
   const timeSelect =
     document.getElementById("appointment-time");
 
@@ -135,8 +168,24 @@ document.addEventListener("DOMContentLoaded", () => {
   const confirmationMessage =
     document.getElementById("confirmation-message");
 
+  const smsPolicyLinks =
+    document.getElementById("sms-policy-links");
+
+  const privacyPolicyLink =
+    document.getElementById("privacy-policy-link");
+
+  const termsPolicyLink =
+    document.getElementById("terms-policy-link");
+
+  const ctaButton =
+    document.querySelector(".get-this-website-button");
+
 
   let selectedBarberId = "";
+  let requestedServiceId = "";
+  let bookingCalendarMonth = new Date();
+  bookingCalendarMonth.setDate(1);
+  bookingCalendarMonth.setHours(0, 0, 0, 0);
 
 
   // ============================================================
@@ -145,11 +194,58 @@ document.addEventListener("DOMContentLoaded", () => {
 
   buildShopInformation();
   buildServices();
-  buildBarberCards();
+  buildProfileCards();
   buildBarberSelect();
   configureBookingCalendar();
   configurePolicyLinks();
   attachGeneralBookingButtons();
+  configureCtaScrollGlow();
+  openBookingFromUrl();
+
+  function openBookingFromUrl() {
+    const params =
+      new URLSearchParams(window.location.search);
+
+    const shouldOpenBooking =
+      params.get("booking") === "open" ||
+      params.get("reschedule") === "1";
+
+    if (!shouldOpenBooking) {
+      return;
+    }
+
+    openBookingModal(
+      params.get("barber") || "",
+      params.get("service") || ""
+    );
+  }
+
+  // Refresh open booking availability when the Owner Interface
+  // changes appointments or approved time off in another tab.
+  function refreshBookingAvailability() {
+    renderBookingDateCalendar();
+    updateAvailableTimes();
+  }
+
+  window.addEventListener("storage", event => {
+    if (
+      event.key === STORAGE_KEY ||
+      event.key === TIME_OFF_STORAGE_KEY
+    ) {
+      refreshBookingAvailability();
+    }
+  });
+
+  // Re-check the owner's latest availability whenever the customer returns
+  // to this tab/window. This prevents an OFF/FULL day from staying visually
+  // stale after the owner or barber changes it back to ON DUTY.
+  window.addEventListener("focus", refreshBookingAvailability);
+
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) {
+      refreshBookingAvailability();
+    }
+  });
 
 
   // ============================================================
@@ -163,12 +259,10 @@ document.addEventListener("DOMContentLoaded", () => {
       shop.name ||
       "Business Pro Barber Demo";
 
-
     if (shopName) {
       shopName.textContent =
         shop.name || "BARBER SHOP";
     }
-
 
     if (heroTitle) {
       heroTitle.textContent =
@@ -176,40 +270,38 @@ document.addEventListener("DOMContentLoaded", () => {
         "LOOK SHARP. FEEL SHARP.";
     }
 
-
     if (heroSubtitle) {
       heroSubtitle.textContent =
         shop.heroSubtitle || "";
     }
 
+    if (hero) {
 
-    if (hero && shop.heroImage) {
-
-      hero.style.backgroundImage = `
-        linear-gradient(
-          rgba(0, 0, 0, 0.40),
-          rgba(0, 0, 0, 0.40)
-        ),
-        url("${shop.heroImage}")
-      `;
+      if (shop.heroImage) {
+        hero.style.backgroundImage = `
+          linear-gradient(
+            rgba(0, 0, 0, 0.42),
+            rgba(0, 0, 0, 0.42)
+          ),
+          url("${escapeCssUrl(shop.heroImage)}")
+        `;
+      } else {
+        hero.classList.add("hero-no-image");
+      }
 
     }
-
 
     if (shopAddressLine1) {
       shopAddressLine1.textContent =
         shop.addressLine1 || "";
     }
 
-
     if (shopAddressLine2) {
       shopAddressLine2.textContent =
         shop.addressLine2 || "";
     }
 
-
     if (shopPhoneLink) {
-
       shopPhoneLink.textContent =
         shop.phoneDisplay || "";
 
@@ -217,24 +309,17 @@ document.addEventListener("DOMContentLoaded", () => {
         shop.phoneLink
           ? `tel:${shop.phoneLink}`
           : "#";
-
     }
-
 
     if (footerShopName) {
       footerShopName.textContent =
         shop.name || "Barber Shop";
     }
 
-
     buildHours();
 
   }
 
-
-  // ============================================================
-  // SHOP HOURS
-  // ============================================================
 
   function buildHours() {
 
@@ -242,9 +327,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-
     shopHours.innerHTML = "";
-
 
     if (
       !Array.isArray(shop.hours) ||
@@ -253,7 +336,6 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-
     const heading =
       document.createElement("h3");
 
@@ -261,7 +343,6 @@ document.addEventListener("DOMContentLoaded", () => {
       "Hours";
 
     shopHours.appendChild(heading);
-
 
     shop.hours.forEach(item => {
 
@@ -281,113 +362,85 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   // ============================================================
-  // SERVICES
+  // CLICKABLE SERVICE CARDS
   // ============================================================
 
   function buildServices() {
 
-  if (!servicesList) {
-    return;
+    if (!servicesList) {
+      return;
+    }
+
+    servicesList.innerHTML = "";
+
+    services.forEach(service => {
+
+      const card =
+        document.createElement("button");
+
+      card.type =
+        "button";
+
+      card.className =
+        "service-card";
+
+      card.setAttribute(
+        "aria-label",
+        `Book ${service.name} for ${formatPrice(service.price)}`
+      );
+
+          card.innerHTML = `
+        <div class="service-card-icon" data-service-icon="${escapeAttribute(service.id)}"></div>
+
+        <h3>
+          ${escapeHTML(service.name)}
+        </h3>
+
+        <p>
+          ${formatPrice(service.price)}
+        </p>
+
+        <span class="service-card-arrow" aria-hidden="true">
+          ›
+        </span>
+      `;
+
+      card.addEventListener(
+        "click",
+        () => {
+          openBookingModal(
+            "",
+            service.id
+          );
+        }
+      );
+
+      servicesList.appendChild(card);
+
+    });
+
   }
 
-  servicesList.innerHTML = "";
-
-  services.forEach(service => {
-
-    const card =
-      document.createElement("div");
-
-    card.className =
-      "service-card";
-
-    card.setAttribute(
-      "role",
-      "button"
-    );
-
-    card.setAttribute(
-      "tabindex",
-      "0"
-    );
-
-    card.dataset.serviceId =
-      service.id;
-
-    card.innerHTML = `
-      <div class="service-card-icon" data-service-icon="${escapeAttribute(service.id)}"></div>
-
-      <h3>
-        ${escapeHTML(service.name)}
-      </h3>
-
-      <p>
-        ${formatPrice(service.price)}
-      </p>
-
-      <span class="service-card-arrow">
-        ›
-      </span>
-    `;
-
-    const openServiceBooking = () => {
-      openBookingModal(
-        "",
-        service.id
-      );
-    };
-
-    card.addEventListener(
-      "click",
-      openServiceBooking
-    );
-
-    card.addEventListener(
-      "keydown",
-      event => {
-
-        if (
-          event.key === "Enter" ||
-          event.key === " "
-        ) {
-          event.preventDefault();
-          openServiceBooking();
-        }
-
-      }
-    );
-
-    servicesList.appendChild(card);
-
-  });
-
-}
-
 
   // ============================================================
-  // SMALL BARBER CARDS
+  // PROFILE CARDS
   // ============================================================
 
-  function buildBarberCards() {
+  function buildProfileCards() {
 
     if (!barberSelector) {
       return;
     }
 
-
     barberSelector.innerHTML = "";
 
-
-    if (barbers.length === 0) {
-
+    if (profiles.length === 0) {
       barberSelector.innerHTML =
-        "<p>No barbers have been added yet.</p>";
-
+        "<p>No profiles have been added yet.</p>";
       return;
-
     }
 
-
-    barbers.forEach(barber => {
+    profiles.forEach(profile => {
 
       const card =
         document.createElement("button");
@@ -398,44 +451,43 @@ document.addEventListener("DOMContentLoaded", () => {
       card.className =
         "barber-selector-card";
 
-      card.dataset.barberId =
-        barber.id;
+      if (
+        profile.profileType ===
+        "business-pro-local"
+      ) {
+        card.classList.add(
+          "business-pro-profile-card"
+        );
+      }
 
+      card.dataset.barberId =
+        profile.id;
 
       const specialty =
-        barber.cardSpecialty
+        profile.cardSpecialty
           ? `
               <p class="barber-card-specialty">
-                ${escapeHTML(barber.cardSpecialty)}
+                ${escapeHTML(profile.cardSpecialty)}
               </p>
             `
           : "";
 
-
       card.innerHTML = `
-
-        ${buildProfilePhoto(barber, "small")}
+        ${buildProfilePhoto(profile, "small")}
 
         <h3>
-          ${escapeHTML(barber.name)}
+          ${escapeHTML(profile.name)}
         </h3>
 
         ${specialty}
-
       `;
-
 
       card.addEventListener(
         "click",
         () => {
-
-          openBarberProfile(
-            barber.id
-          );
-
+          openProfile(profile.id);
         }
       );
-
 
       barberSelector.appendChild(card);
 
@@ -445,30 +497,41 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   // ============================================================
-  // OPEN INDIVIDUAL BARBER PROFILE
+  // OPEN PROFILE
   // ============================================================
 
-  function openBarberProfile(
-    barberId
-  ) {
+  function openProfile(profileId) {
 
-    const barber =
-      getBarberById(barberId);
+    const profile =
+      getProfileById(profileId);
 
-
-    if (!barber) {
+    if (!profile || !profileModal || !profileContent) {
       return;
     }
 
+    if (
+      profile.profileType ===
+      "business-pro-local"
+    ) {
+      buildBusinessProProfile(profile);
+    } else {
+      buildBarberProfile(profile);
+    }
+
+    profileModal.classList.add("open");
+    document.body.style.overflow = "hidden";
+
+  }
+
+
+  function buildBarberProfile(barber) {
 
     const specialties =
       Array.isArray(barber.specialties)
         ? barber.specialties.join(" • ")
         : "";
 
-
-    barberProfileContent.innerHTML = `
-
+    profileContent.innerHTML = `
       <div class="barber-popup-profile">
 
         <div class="barber-popup-header">
@@ -534,6 +597,10 @@ document.addEventListener("DOMContentLoaded", () => {
             ${escapeHTML(barber.name)}'s Work
           </h3>
 
+          <p class="gallery-help-text">
+            Add up to three examples of this barber's work.
+          </p>
+
           <div
             class="barber-gallery"
             id="gallery-${escapeAttribute(barber.id)}"
@@ -542,168 +609,269 @@ document.addEventListener("DOMContentLoaded", () => {
 
         </div>
 
-
       </div>
-
     `;
 
-
     buildBarberGallery(barber);
-
 
     const bookButton =
       document.getElementById(
         "barber-popup-book-button"
       );
 
-
     if (bookButton) {
-
       bookButton.addEventListener(
         "click",
         () => {
-
-          closeBarberProfile(false);
-
-          openBookingModal(
-            barber.id
-          );
-
+          closeProfile(false);
+          openBookingModal(barber.id);
         }
       );
-
     }
 
+  }
 
-    barberProfileModal.classList.add(
-      "open"
-    );
 
-    document.body.style.overflow =
-      "hidden";
+  function buildBusinessProProfile(profile) {
+
+    const specialties =
+      Array.isArray(profile.specialties)
+        ? profile.specialties
+        : [];
+
+    const action =
+      profile.actionButton || {};
+
+    const actionText =
+      action.text || "Get This Website";
+
+    const actionHref =
+      action.href || "join.html";
+
+    profileContent.innerHTML = `
+      <div class="barber-popup-profile business-pro-popup-profile">
+
+        <div class="barber-popup-header">
+
+          <div class="barber-popup-action">
+            ${buildProfilePhoto(profile, "large")}
+          </div>
+
+          <div class="barber-popup-info">
+
+            <p class="business-pro-popup-eyebrow">
+              BUSINESS PRO LOCAL
+            </p>
+
+            <h2>
+              ${escapeHTML(profile.name)}
+            </h2>
+
+            ${
+              profile.cardSpecialty
+                ? `
+                    <p class="barber-popup-tagline">
+                      ${escapeHTML(profile.cardSpecialty)}
+                    </p>
+                  `
+                : ""
+            }
+
+            ${
+              profile.bio
+                ? `
+                    <p class="barber-popup-bio">
+                      ${escapeHTML(profile.bio)}
+                    </p>
+                  `
+                : ""
+            }
+
+          </div>
+
+        </div>
+
+        <div class="business-pro-services">
+
+          <h3>
+            Business Pro Services
+          </h3>
+
+          <ul>
+            ${specialties
+              .map(
+                item => `
+                  <li>
+                    ${escapeHTML(item)}
+                  </li>
+                `
+              )
+              .join("")}
+          </ul>
+
+          <a
+            class="get-this-website-button business-pro-popup-button"
+            href="${escapeAttribute(actionHref)}"
+          >
+            ${escapeHTML(actionText)}
+            <span aria-hidden="true">
+              &rarr;
+            </span>
+          </a>
+
+        </div>
+
+      </div>
+    `;
 
   }
 
 
   // ============================================================
-  // BARBER GALLERY
+  // THREE-SLOT BARBER GALLERY
   // ============================================================
 
-  function buildBarberGallery(
-    barber
-  ) {
+  function buildBarberGallery(barber) {
 
     const galleryElement =
       document.getElementById(
         `gallery-${barber.id}`
       );
 
-
     if (!galleryElement) {
       return;
     }
 
+    galleryElement.innerHTML = "";
 
-    galleryElement.innerHTML =
-      "";
-
-
-    const gallery =
+    const configuredGallery =
       Array.isArray(barber.gallery)
         ? barber.gallery
         : [];
 
+    const requestedSlots =
+      Number(barber.uploadSlots);
 
-    gallery.forEach(photo => {
+    const slotCount =
+      Number.isFinite(requestedSlots) &&
+      requestedSlots > 0
+        ? Math.min(
+            3,
+            Math.floor(requestedSlots)
+          )
+        : Math.min(
+            3,
+            Math.max(configuredGallery.length, 0)
+          );
 
-      const item =
-        document.createElement("figure");
-
-      item.className =
-        "gallery-item";
-
-
-      item.innerHTML = `
-
-        <img
-          src="${escapeAttribute(photo.image)}"
-          alt="${escapeAttribute(
-            photo.caption ||
-            `${barber.name} haircut`
-          )}"
-          loading="lazy"
-        >
-
-        ${
-          photo.caption
-            ? `
-                <figcaption>
-                  ${escapeHTML(photo.caption)}
-                </figcaption>
-              `
-            : ""
-        }
-
+    if (slotCount === 0) {
+      galleryElement.innerHTML = `
+        <div class="gallery-empty">
+          <p>
+            Haircut photos will appear here.
+          </p>
+        </div>
       `;
+      return;
+    }
 
+    for (
+      let slotIndex = 0;
+      slotIndex < slotCount;
+      slotIndex += 1
+    ) {
 
-      galleryElement.appendChild(item);
-
-    });
-
-
-    if (barber.demoUploadEnabled) {
+      const configuredPhoto =
+        configuredGallery[slotIndex] || null;
 
       const uploadSlot =
-        document.createElement("div");
+        createGalleryUploadSlot(
+          barber,
+          slotIndex,
+          configuredPhoto
+        );
 
-      uploadSlot.className =
-        "gallery-upload-slot";
+      galleryElement.appendChild(uploadSlot);
+
+      setupGalleryUpload(
+        barber,
+        slotIndex,
+        uploadSlot,
+        configuredPhoto
+      );
+
+    }
+
+  }
 
 
-      uploadSlot.innerHTML = `
+  function createGalleryUploadSlot(
+    barber,
+    slotIndex,
+    configuredPhoto
+  ) {
 
-        <input
-          type="file"
-          class="gallery-upload-input"
-          accept="image/*"
-          hidden
+    const slot =
+      document.createElement("div");
+
+    slot.className =
+      "gallery-upload-slot";
+
+    const slotNumber =
+      slotIndex + 1;
+
+    const configuredCaption =
+      configuredPhoto && configuredPhoto.caption
+        ? configuredPhoto.caption
+        : `Haircut Photo ${slotNumber}`;
+
+    slot.innerHTML = `
+      <input
+        type="file"
+        class="gallery-upload-input"
+        accept="image/*"
+        hidden
+      >
+
+      <div
+        class="gallery-upload-empty"
+        role="button"
+        tabindex="0"
+        aria-label="Add haircut photo ${slotNumber} for ${escapeAttribute(barber.name)}"
+      >
+
+        <span class="gallery-upload-plus">
+          +
+        </span>
+
+        <strong>
+          Add Haircut Photo ${slotNumber}
+        </strong>
+
+        <span>
+          Click to choose a photo
+        </span>
+
+        <small>
+          Or drag and drop here
+        </small>
+
+      </div>
+
+      <div
+        class="gallery-upload-preview"
+        hidden
+      >
+
+        <img
+          alt="${escapeAttribute(configuredCaption)}"
         >
 
-        <div
-          class="gallery-upload-empty"
-          role="button"
-          tabindex="0"
-          aria-label="Upload a haircut photo for ${escapeAttribute(barber.name)}"
-        >
+        <div class="gallery-upload-actions">
 
-          <span class="gallery-upload-plus">
-            +
+          <span class="gallery-upload-caption">
+            ${escapeHTML(configuredCaption)}
           </span>
-
-          <strong>
-            ${escapeHTML(barber.name)}, put your picture here
-          </strong>
-
-          <span>
-            Tap to choose a photo
-          </span>
-
-          <small>
-            Or drag and drop on a computer
-          </small>
-
-        </div>
-
-
-        <div
-          class="gallery-upload-preview"
-          hidden
-        >
-
-          <img
-            alt="${escapeAttribute(barber.name)} haircut photo"
-          >
 
           <button
             type="button"
@@ -714,47 +882,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
         </div>
 
-      `;
+      </div>
+    `;
 
-
-      galleryElement.appendChild(
-        uploadSlot
-      );
-
-
-      setupBarberPhotoUpload(
-        barber,
-        uploadSlot
-      );
-
-
-    } else if (gallery.length === 0) {
-
-      galleryElement.innerHTML = `
-
-        <div class="gallery-empty">
-
-          <p>
-            ${escapeHTML(barber.name)}'s haircut photos
-            will appear here.
-          </p>
-
-        </div>
-
-      `;
-
-    }
+    return slot;
 
   }
 
 
-  // ============================================================
-  // DEMO BARBER PHOTO UPLOAD
-  // ============================================================
-
-  function setupBarberPhotoUpload(
+  function setupGalleryUpload(
     barber,
-    uploadSlot
+    slotIndex,
+    uploadSlot,
+    configuredPhoto
   ) {
 
     const input =
@@ -767,48 +907,31 @@ document.addEventListener("DOMContentLoaded", () => {
         ".gallery-upload-empty"
       );
 
-    const preview =
-      uploadSlot.querySelector(
-        ".gallery-upload-preview"
-      );
-
-    const previewImage =
-      uploadSlot.querySelector(
-        ".gallery-upload-preview img"
-      );
-
     const replaceButton =
       uploadSlot.querySelector(
         ".gallery-replace-photo"
       );
 
-
     if (
       !input ||
       !emptyState ||
-      !preview ||
-      !previewImage ||
       !replaceButton
     ) {
       return;
     }
 
-
     const choosePhoto = () => {
       input.click();
     };
-
 
     emptyState.addEventListener(
       "click",
       choosePhoto
     );
 
-
     emptyState.addEventListener(
       "keydown",
       event => {
-
         if (
           event.key === "Enter" ||
           event.key === " "
@@ -816,16 +939,13 @@ document.addEventListener("DOMContentLoaded", () => {
           event.preventDefault();
           choosePhoto();
         }
-
       }
     );
-
 
     replaceButton.addEventListener(
       "click",
       choosePhoto
     );
-
 
     input.addEventListener(
       "change",
@@ -836,63 +956,48 @@ document.addEventListener("DOMContentLoaded", () => {
           input.files[0];
 
         if (file) {
-
-          handleBarberPhotoFile(
+          handleGalleryFile(
             barber,
+            slotIndex,
             uploadSlot,
             file
           );
-
         }
 
-        input.value =
-          "";
+        input.value = "";
 
       }
     );
-
 
     [
       "dragenter",
       "dragover"
     ].forEach(eventName => {
-
       emptyState.addEventListener(
         eventName,
         event => {
-
           event.preventDefault();
-
           emptyState.classList.add(
             "drag-over"
           );
-
         }
       );
-
     });
-
 
     [
       "dragleave",
       "drop"
     ].forEach(eventName => {
-
       emptyState.addEventListener(
         eventName,
         event => {
-
           event.preventDefault();
-
           emptyState.classList.remove(
             "drag-over"
           );
-
         }
       );
-
     });
-
 
     emptyState.addEventListener(
       "drop",
@@ -904,48 +1009,65 @@ document.addEventListener("DOMContentLoaded", () => {
           event.dataTransfer.files[0];
 
         if (file) {
-
-          handleBarberPhotoFile(
+          handleGalleryFile(
             barber,
+            slotIndex,
             uploadSlot,
             file
           );
-
         }
 
       }
     );
 
-
-    loadSavedBarberPhoto(
-      barber.id
+    loadSavedGalleryPhoto(
+      barber.id,
+      slotIndex
     )
       .then(savedPhoto => {
 
         if (savedPhoto) {
-
-          showBarberPhotoPreview(
+          showGalleryPhoto(
             uploadSlot,
             savedPhoto
           );
+          return;
+        }
 
+        if (
+          configuredPhoto &&
+          configuredPhoto.image
+        ) {
+          showGalleryPhoto(
+            uploadSlot,
+            configuredPhoto.image
+          );
         }
 
       })
       .catch(error => {
-
         console.warn(
-          "Saved barber photo could not be loaded:",
+          "Saved gallery photo could not be loaded:",
           error
         );
 
+        if (
+          configuredPhoto &&
+          configuredPhoto.image
+        ) {
+          showGalleryPhoto(
+            uploadSlot,
+            configuredPhoto.image
+          );
+        }
       });
 
   }
 
 
-  function handleBarberPhotoFile(
+  function handleGalleryFile(
     barber,
+    slotIndex,
     uploadSlot,
     file
   ) {
@@ -955,58 +1077,44 @@ document.addEventListener("DOMContentLoaded", () => {
       !file.type ||
       !file.type.startsWith("image/")
     ) {
-
       window.alert(
         "Please choose an image file."
       );
-
       return;
-
     }
-
 
     const MAX_IMAGE_SIZE =
       12 * 1024 * 1024;
 
-
-    if (
-      file.size >
-      MAX_IMAGE_SIZE
-    ) {
-
+    if (file.size > MAX_IMAGE_SIZE) {
       window.alert(
         "Please choose an image smaller than 12 MB."
       );
-
       return;
-
     }
 
-
-    showBarberPhotoPreview(
+    showGalleryPhoto(
       uploadSlot,
       file
     );
 
-
-    saveBarberPhoto(
+    saveGalleryPhoto(
       barber.id,
+      slotIndex,
       file
     ).catch(error => {
-
       console.warn(
-        "Barber photo could not be saved:",
+        "Gallery photo could not be saved:",
         error
       );
-
     });
 
   }
 
 
-  function showBarberPhotoPreview(
+  function showGalleryPhoto(
     uploadSlot,
-    imageBlob
+    imageSource
   ) {
 
     const emptyState =
@@ -1024,7 +1132,6 @@ document.addEventListener("DOMContentLoaded", () => {
         ".gallery-upload-preview img"
       );
 
-
     if (
       !emptyState ||
       !preview ||
@@ -1033,35 +1140,28 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-
-    if (
-      previewImage.dataset.objectUrl
-    ) {
-
+    if (previewImage.dataset.objectUrl) {
       URL.revokeObjectURL(
         previewImage.dataset.objectUrl
       );
-
+      delete previewImage.dataset.objectUrl;
     }
 
+    if (
+      typeof imageSource === "string"
+    ) {
+      previewImage.src = imageSource;
+    } else {
+      const objectUrl =
+        URL.createObjectURL(imageSource);
 
-    const objectUrl =
-      URL.createObjectURL(
-        imageBlob
-      );
+      previewImage.src = objectUrl;
+      previewImage.dataset.objectUrl =
+        objectUrl;
+    }
 
-
-    previewImage.src =
-      objectUrl;
-
-    previewImage.dataset.objectUrl =
-      objectUrl;
-
-    emptyState.hidden =
-      true;
-
-    preview.hidden =
-      false;
+    emptyState.hidden = true;
+    preview.hidden = false;
 
   }
 
@@ -1070,30 +1170,25 @@ document.addEventListener("DOMContentLoaded", () => {
   // INDEXEDDB PHOTO STORAGE
   // ============================================================
 
-  function openBarberPhotoDatabase() {
+  function openPhotoDatabase() {
 
     return new Promise(
       (resolve, reject) => {
 
         if (!window.indexedDB) {
-
           reject(
             new Error(
               "IndexedDB is not supported in this browser."
             )
           );
-
           return;
-
         }
-
 
         const request =
           indexedDB.open(
-            BARBER_PHOTO_DB_NAME,
+            PHOTO_DB_NAME,
             1
           );
-
 
         request.onupgradeneeded =
           event => {
@@ -1101,46 +1196,34 @@ document.addEventListener("DOMContentLoaded", () => {
             const database =
               event.target.result;
 
-
             if (
               !database.objectStoreNames.contains(
-                BARBER_PHOTO_STORE_NAME
+                PHOTO_STORE_NAME
               )
             ) {
-
               database.createObjectStore(
-                BARBER_PHOTO_STORE_NAME,
+                PHOTO_STORE_NAME,
                 {
-                  keyPath:
-                    "barberId"
+                  keyPath: "id"
                 }
               );
-
             }
 
           };
 
-
         request.onsuccess =
           () => {
-
-            resolve(
-              request.result
-            );
-
+            resolve(request.result);
           };
-
 
         request.onerror =
           () => {
-
             reject(
               request.error ||
               new Error(
                 "The photo database could not be opened."
               )
             );
-
           };
 
       }
@@ -1149,80 +1232,65 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
 
-  async function saveBarberPhoto(
+  async function saveGalleryPhoto(
     barberId,
+    slotIndex,
     imageBlob
   ) {
 
     const database =
-      await openBarberPhotoDatabase();
-
+      await openPhotoDatabase();
 
     return new Promise(
       (resolve, reject) => {
 
         const transaction =
           database.transaction(
-            BARBER_PHOTO_STORE_NAME,
+            PHOTO_STORE_NAME,
             "readwrite"
           );
 
         const store =
           transaction.objectStore(
-            BARBER_PHOTO_STORE_NAME
+            PHOTO_STORE_NAME
           );
 
-
         store.put({
-
-          barberId:
-            barberId,
-
-          imageBlob:
-            imageBlob,
-
+          id:
+            `${barberId}-${slotIndex}`,
+          barberId,
+          slotIndex,
+          imageBlob,
           updatedAt:
             Date.now()
-
         });
-
 
         transaction.oncomplete =
           () => {
-
             database.close();
             resolve();
-
           };
-
 
         transaction.onerror =
           () => {
-
             database.close();
-
             reject(
               transaction.error ||
               new Error(
                 "The photo could not be saved."
               )
             );
-
           };
-
 
         transaction.onabort =
           () => {
-
             database.close();
-
             reject(
               transaction.error ||
               new Error(
                 "Saving the photo was cancelled."
               )
             );
-
           };
 
       }
@@ -1231,33 +1299,32 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
 
-  async function loadSavedBarberPhoto(
-    barberId
+  async function loadSavedGalleryPhoto(
+    barberId,
+    slotIndex
   ) {
 
     const database =
-      await openBarberPhotoDatabase();
-
+      await openPhotoDatabase();
 
     return new Promise(
       (resolve, reject) => {
 
         const transaction =
           database.transaction(
-            BARBER_PHOTO_STORE_NAME,
+            PHOTO_STORE_NAME,
             "readonly"
           );
 
         const store =
           transaction.objectStore(
-            BARBER_PHOTO_STORE_NAME
+            PHOTO_STORE_NAME
           );
 
         const request =
           store.get(
-            barberId
+            `${barberId}-${slotIndex}`
           );
-
 
         request.onsuccess =
           () => {
@@ -1268,27 +1335,22 @@ document.addEventListener("DOMContentLoaded", () => {
             database.close();
 
             resolve(
-              record &&
-              record.imageBlob
+              record && record.imageBlob
                 ? record.imageBlob
                 : null
             );
 
           };
 
-
         request.onerror =
           () => {
-
             database.close();
-
             reject(
               request.error ||
               new Error(
                 "The saved photo could not be loaded."
               )
             );
-
           };
 
       }
@@ -1298,50 +1360,41 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   // ============================================================
-  // CLOSE BARBER PROFILE
+  // CLOSE PROFILE
   // ============================================================
 
-  closeBarberProfileButton.addEventListener(
-    "click",
-    () => {
-
-      closeBarberProfile();
-
-    }
-  );
-
-
-  barberProfileModal.addEventListener(
-    "click",
-    event => {
-
-      if (
-        event.target ===
-        barberProfileModal
-      ) {
-
-        closeBarberProfile();
-
+  if (closeProfileButton) {
+    closeProfileButton.addEventListener(
+      "click",
+      () => {
+        closeProfile();
       }
+    );
+  }
 
-    }
-  );
+  if (profileModal) {
+    profileModal.addEventListener(
+      "click",
+      event => {
+        if (event.target === profileModal) {
+          closeProfile();
+        }
+      }
+    );
+  }
 
-
-  function closeBarberProfile(
+  function closeProfile(
     restoreScroll = true
   ) {
 
-    barberProfileModal.classList.remove(
-      "open"
-    );
+    if (!profileModal) {
+      return;
+    }
 
+    profileModal.classList.remove("open");
 
     if (restoreScroll) {
-
-      document.body.style.overflow =
-        "";
-
+      document.body.style.overflow = "";
     }
 
   }
@@ -1352,7 +1405,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // ============================================================
 
   function buildProfilePhoto(
-    barber,
+    profile,
     size
   ) {
 
@@ -1361,47 +1414,39 @@ document.addEventListener("DOMContentLoaded", () => {
         ? "barber-card-photo"
         : "barber-popup-photo";
 
-
-    if (barber.profilePhoto) {
-
+    if (profile.profilePhoto) {
       return `
-
         <img
           class="${className}"
-          src="${escapeAttribute(barber.profilePhoto)}"
-          alt="${escapeAttribute(barber.name)}"
+          src="${escapeAttribute(profile.profilePhoto)}"
+          alt="${escapeAttribute(profile.name)}"
         >
-
       `;
-
     }
 
-
     return `
-
       <div
         class="${className} barber-photo-placeholder"
-        aria-label="${escapeAttribute(barber.name)}"
+        aria-label="${escapeAttribute(profile.name)}"
       >
-
         ${escapeHTML(
-          getInitials(
-            barber.name
-          )
+          getInitials(profile.name)
         )}
-
       </div>
-
     `;
 
   }
 
 
   // ============================================================
-  // BARBER BOOKING DROPDOWN
+  // BOOKING DROPDOWN
   // ============================================================
 
   function buildBarberSelect() {
+
+    if (!barberSelect) {
+      return;
+    }
 
     barberSelect.innerHTML = `
       <option value="">
@@ -1409,13 +1454,10 @@ document.addEventListener("DOMContentLoaded", () => {
       </option>
     `;
 
-
-    barbers.forEach(barber => {
+    bookableBarbers.forEach(barber => {
 
       const option =
-        document.createElement(
-          "option"
-        );
+        document.createElement("option");
 
       option.value =
         barber.id;
@@ -1423,9 +1465,7 @@ document.addEventListener("DOMContentLoaded", () => {
       option.textContent =
         barber.name;
 
-      barberSelect.appendChild(
-        option
-      );
+      barberSelect.appendChild(option);
 
     });
 
@@ -1443,21 +1483,15 @@ document.addEventListener("DOMContentLoaded", () => {
         ".open-booking"
       );
 
-
     buttons.forEach(button => {
-
       button.addEventListener(
         "click",
         () => {
-
           openBookingModal(
-            button.dataset.barber ||
-            ""
+            button.dataset.barber || ""
           );
-
         }
       );
-
     });
 
   }
@@ -1467,68 +1501,50 @@ document.addEventListener("DOMContentLoaded", () => {
   // OPEN BOOKING
   // ============================================================
 
- function openBookingModal(
-  requestedBarberId,
-  requestedServiceId = ""
-) {
+  function openBookingModal(
+    requestedBarberId = "",
+    requestedService = ""
+  ) {
 
-  bookingModal.dataset.requestedServiceId =
-    requestedServiceId;
-  
+    if (!bookingModal) {
+      return;
+    }
 
-    confirmationMessage.innerHTML =
-      "";
+    requestedServiceId =
+      requestedService || "";
 
+    confirmationMessage.innerHTML = "";
 
     const requestedBarber =
       requestedBarberId
-        ? getBarberById(
+        ? getBookableBarberById(
             requestedBarberId
           )
         : null;
 
-
     if (requestedBarber) {
 
-      setBarberChoiceVisibility(
-        false
-      );
-
-      selectBarber(
-        requestedBarber.id
-      );
-
+      setBarberChoiceVisibility(false);
+      selectBarber(requestedBarber.id);
 
     } else if (
-      barbers.length === 1
+      bookableBarbers.length === 1
     ) {
 
-      setBarberChoiceVisibility(
-        false
-      );
-
+      setBarberChoiceVisibility(false);
       selectBarber(
-        barbers[0].id
+        bookableBarbers[0].id
       );
-
 
     } else {
 
-      setBarberChoiceVisibility(
-        true
-      );
-
+      setBarberChoiceVisibility(true);
       selectBarber("");
 
     }
 
-
-    bookingModal.classList.add(
-      "open"
-    );
-
-    document.body.style.overflow =
-      "hidden";
+    bookingModal.classList.add("open");
+    document.body.style.overflow = "hidden";
 
   }
 
@@ -1538,38 +1554,32 @@ document.addEventListener("DOMContentLoaded", () => {
   ) {
 
     if (barberSelectLabel) {
-
       barberSelectLabel.hidden =
         !showChoice;
-
     }
 
-
     if (barberSelect) {
-
       barberSelect.hidden =
         !showChoice;
-
     }
 
   }
 
 
   // ============================================================
-  // BARBER SELECTION INSIDE BOOKING
+  // BARBER SELECTION
   // ============================================================
 
-  barberSelect.addEventListener(
-    "change",
-    () => {
-
-      selectBarber(
-        barberSelect.value
-      );
-
-    }
-  );
-
+  if (barberSelect) {
+    barberSelect.addEventListener(
+      "change",
+      () => {
+        selectBarber(
+          barberSelect.value
+        );
+      }
+    );
+  }
 
   function selectBarber(
     barberId
@@ -1578,53 +1588,62 @@ document.addEventListener("DOMContentLoaded", () => {
     selectedBarberId =
       barberId;
 
-    barberSelect.value =
-      barberId;
-
+    if (barberSelect) {
+      barberSelect.value =
+        barberId;
+    }
 
     const barber =
-      getBarberById(
+      getBookableBarberById(
         barberId
       );
 
-
     if (!barber) {
 
-      selectedBarberDisplay.textContent =
-        "Select a Barber";
+      if (selectedBarberDisplay) {
+        selectedBarberDisplay.textContent =
+          "Select a Barber";
+      }
 
-      buildServiceSelect(
-        null
-      );
+      if (dateInput) {
+        dateInput.value = "";
+      }
 
+      buildServiceSelect(null);
       resetTimeSelect();
-
+      renderBookingDateCalendar();
       return;
 
     }
 
+    if (selectedBarberDisplay) {
+      selectedBarberDisplay.textContent =
+        barber.name;
+    }
 
-    selectedBarberDisplay.textContent =
-      barber.name;
+    if (dateInput) {
+      dateInput.value = "";
+    }
 
+    bookingCalendarMonth = new Date();
+    bookingCalendarMonth.setDate(1);
+    bookingCalendarMonth.setHours(0, 0, 0, 0);
 
-    buildServiceSelect(
-      barber
-    );
-        const requestedServiceId =
-      bookingModal.dataset.requestedServiceId || "";
+    buildServiceSelect(barber);
+    resetTimeSelect();
+    renderBookingDateCalendar();
 
     if (
       requestedServiceId &&
       Array.from(serviceSelect.options).some(
         option =>
-          option.value === requestedServiceId
+          option.value ===
+          requestedServiceId
       )
     ) {
       serviceSelect.value =
         requestedServiceId;
     }
-
 
     updateAvailableTimes();
 
@@ -1639,42 +1658,36 @@ document.addEventListener("DOMContentLoaded", () => {
     barber
   ) {
 
+    if (!serviceSelect) {
+      return;
+    }
+
     serviceSelect.innerHTML = `
       <option value="">
         Select a service
       </option>
     `;
 
-
     if (!barber) {
       return;
     }
 
-
     const allowedIds =
-      Array.isArray(
-        barber.serviceIds
-      )
+      Array.isArray(barber.serviceIds)
         ? barber.serviceIds
         : [];
-
 
     services.forEach(service => {
 
       if (
         allowedIds.length > 0 &&
-        !allowedIds.includes(
-          service.id
-        )
+        !allowedIds.includes(service.id)
       ) {
         return;
       }
 
-
       const option =
-        document.createElement(
-          "option"
-        );
+        document.createElement("option");
 
       option.value =
         service.id;
@@ -1682,10 +1695,7 @@ document.addEventListener("DOMContentLoaded", () => {
       option.textContent =
         `${service.name} - ${formatPrice(service.price)}`;
 
-
-      serviceSelect.appendChild(
-        option
-      );
+      serviceSelect.appendChild(option);
 
     });
 
@@ -1696,37 +1706,32 @@ document.addEventListener("DOMContentLoaded", () => {
   // CLOSE BOOKING
   // ============================================================
 
-  closeBookingButton.addEventListener(
-    "click",
-    closeBookingModal
-  );
+  if (closeBookingButton) {
+    closeBookingButton.addEventListener(
+      "click",
+      closeBookingModal
+    );
+  }
 
-
-  bookingModal.addEventListener(
-    "click",
-    event => {
-
-      if (
-        event.target ===
-        bookingModal
-      ) {
-
-        closeBookingModal();
-
+  if (bookingModal) {
+    bookingModal.addEventListener(
+      "click",
+      event => {
+        if (event.target === bookingModal) {
+          closeBookingModal();
+        }
       }
-
-    }
-  );
-
+    );
+  }
 
   function closeBookingModal() {
 
-    bookingModal.classList.remove(
-      "open"
-    );
+    if (!bookingModal) {
+      return;
+    }
 
-    document.body.style.overflow =
-      "";
+    bookingModal.classList.remove("open");
+    document.body.style.overflow = "";
 
   }
 
@@ -1739,34 +1744,23 @@ document.addEventListener("DOMContentLoaded", () => {
     "keydown",
     event => {
 
-      if (
-        event.key !==
-        "Escape"
-      ) {
+      if (event.key !== "Escape") {
         return;
       }
 
-
       if (
-        bookingModal.classList.contains(
-          "open"
-        )
+        bookingModal &&
+        bookingModal.classList.contains("open")
       ) {
-
         closeBookingModal();
         return;
-
       }
 
-
       if (
-        barberProfileModal.classList.contains(
-          "open"
-        )
+        profileModal &&
+        profileModal.classList.contains("open")
       ) {
-
-        closeBarberProfile();
-
+        closeProfile();
       }
 
     }
@@ -1779,38 +1773,464 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function configureBookingCalendar() {
 
+    if (!dateInput) {
+      return;
+    }
+
     const today =
       new Date();
 
+    today.setHours(
+      0,
+      0,
+      0,
+      0
+    );
 
-    dateInput.min =
-      formatDateForInput(
-        today
-      );
+    const maxDate =
+      new Date(today);
 
-
-    const finalDate =
-      new Date();
-
-
-    finalDate.setDate(
-      finalDate.getDate() +
+    maxDate.setDate(
+      maxDate.getDate() +
       DAYS_AVAILABLE
     );
 
+    dateInput.min =
+      toDateInputValue(today);
 
     dateInput.max =
-      formatDateForInput(
-        finalDate
+      toDateInputValue(maxDate);
+
+    bookingCalendarMonth = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      1
+    );
+
+    if (bookingDatePrev) {
+      bookingDatePrev.addEventListener(
+        "click",
+        () => {
+          bookingCalendarMonth.setMonth(
+            bookingCalendarMonth.getMonth() - 1
+          );
+          renderBookingDateCalendar();
+        }
       );
+    }
+
+    if (bookingDateNext) {
+      bookingDateNext.addEventListener(
+        "click",
+        () => {
+          bookingCalendarMonth.setMonth(
+            bookingCalendarMonth.getMonth() + 1
+          );
+          renderBookingDateCalendar();
+        }
+      );
+    }
+
+    renderBookingDateCalendar();
 
   }
 
 
-  dateInput.addEventListener(
-    "change",
-    updateAvailableTimes
-  );
+  if (dateInput) {
+    dateInput.addEventListener(
+      "change",
+      () => {
+        renderBookingDateCalendar();
+        updateAvailableTimes();
+      }
+    );
+  }
+
+  if (serviceSelect) {
+    serviceSelect.addEventListener(
+      "change",
+      () => {
+        renderBookingDateCalendar();
+        updateAvailableTimes();
+      }
+    );
+  }
+
+
+  function getDateAvailability(
+    barber,
+    dateKey
+  ) {
+
+    const selectedDate =
+      parseDateInput(dateKey);
+
+    if (!barber || !selectedDate) {
+      return {
+        available: false,
+        status: "unavailable",
+        label: "OFF",
+        times: []
+      };
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const maxDate = new Date(today);
+    maxDate.setDate(maxDate.getDate() + DAYS_AVAILABLE);
+
+    if (
+      selectedDate < today ||
+      selectedDate > maxDate
+    ) {
+      return {
+        available: false,
+        status: "outside-range",
+        label: "",
+        times: []
+      };
+    }
+
+    const schedule =
+      barber.schedule || {};
+
+    const workingDays =
+      Array.isArray(schedule.workingDays)
+        ? schedule.workingDays
+        : [];
+
+    if (
+      !workingDays.includes(
+        selectedDate.getDay()
+      )
+    ) {
+      return {
+        available: false,
+        status: "off",
+        label: "OFF",
+        times: []
+      };
+    }
+
+    const approvedRequests =
+      getApprovedTimeOff().filter(request =>
+        String(request.employee || "").toLowerCase() ===
+          String(barber.name || "").toLowerCase() &&
+        dateKey >= request.startDate &&
+        dateKey <= request.endDate
+      );
+
+    if (
+      approvedRequests.some(
+        request => request.allDay
+      )
+    ) {
+      return {
+        available: false,
+        status: "off",
+        label: "OFF",
+        times: []
+      };
+    }
+
+    const startTime =
+      schedule.startTime ||
+      "09:00";
+
+    const endTime =
+      schedule.endTime ||
+      "17:00";
+
+    const breaks =
+      Array.isArray(schedule.breaks)
+        ? schedule.breaks
+        : [];
+
+    const bookings =
+      getBookings();
+
+    const times =
+      generateTimeSlots(
+        startTime,
+        endTime,
+        APPOINTMENT_LENGTH
+      );
+
+    const availableTimes =
+      times.filter(time => {
+
+        const duringBreak =
+          breaks.some(item =>
+            timeFallsWithinRange(
+              time,
+              item.start,
+              item.end
+            )
+          );
+
+        if (duringBreak) {
+          return false;
+        }
+
+        const alreadyBooked =
+          bookings.some(booking =>
+            booking.barberId === barber.id &&
+            booking.date === dateKey &&
+            booking.time === time &&
+            bookingBlocksSlot(booking)
+          );
+
+        if (alreadyBooked) {
+          return false;
+        }
+
+        if (
+          isBlockedByApprovedTimeOff(
+            barber.name,
+            dateKey,
+            time
+          )
+        ) {
+          return false;
+        }
+
+        if (
+          isPastTime(
+            dateKey,
+            time
+          )
+        ) {
+          return false;
+        }
+
+        return true;
+
+      });
+
+    if (availableTimes.length === 0) {
+      return {
+        available: false,
+        status: "full",
+        label: "FULL",
+        times: []
+      };
+    }
+
+    return {
+      available: true,
+      status: "available",
+      label: "",
+      times: availableTimes
+    };
+
+  }
+
+
+  function renderBookingDateCalendar() {
+
+    if (
+      !bookingDateCalendar ||
+      !bookingDateGrid ||
+      !bookingDateMonthLabel
+    ) {
+      return;
+    }
+
+    const barber =
+      getBookableBarberById(
+        selectedBarberId
+      );
+
+    bookingDateGrid.innerHTML = "";
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const maxDate = new Date(today);
+    maxDate.setDate(maxDate.getDate() + DAYS_AVAILABLE);
+
+    const firstAllowedMonth = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      1
+    );
+
+    const lastAllowedMonth = new Date(
+      maxDate.getFullYear(),
+      maxDate.getMonth(),
+      1
+    );
+
+    if (bookingCalendarMonth < firstAllowedMonth) {
+      bookingCalendarMonth = new Date(firstAllowedMonth);
+    }
+
+    if (bookingCalendarMonth > lastAllowedMonth) {
+      bookingCalendarMonth = new Date(lastAllowedMonth);
+    }
+
+    bookingDateMonthLabel.textContent =
+      bookingCalendarMonth.toLocaleDateString(
+        "en-US",
+        {
+          month: "long",
+          year: "numeric"
+        }
+      );
+
+    if (bookingDatePrev) {
+      bookingDatePrev.disabled =
+        bookingCalendarMonth.getTime() ===
+        firstAllowedMonth.getTime();
+    }
+
+    if (bookingDateNext) {
+      bookingDateNext.disabled =
+        bookingCalendarMonth.getTime() ===
+        lastAllowedMonth.getTime();
+    }
+
+    const firstDay = new Date(
+      bookingCalendarMonth.getFullYear(),
+      bookingCalendarMonth.getMonth(),
+      1
+    );
+
+    const daysInMonth = new Date(
+      bookingCalendarMonth.getFullYear(),
+      bookingCalendarMonth.getMonth() + 1,
+      0
+    ).getDate();
+
+    const mondayOffset =
+      (firstDay.getDay() + 6) % 7;
+
+    for (
+      let emptyIndex = 0;
+      emptyIndex < mondayOffset;
+      emptyIndex += 1
+    ) {
+      const empty = document.createElement("span");
+      empty.className = "booking-date-empty";
+      bookingDateGrid.appendChild(empty);
+    }
+
+    for (
+      let day = 1;
+      day <= daysInMonth;
+      day += 1
+    ) {
+      const date = new Date(
+        bookingCalendarMonth.getFullYear(),
+        bookingCalendarMonth.getMonth(),
+        day
+      );
+
+      date.setHours(0, 0, 0, 0);
+
+      const dateKey =
+        toDateInputValue(date);
+
+      const outsideRange =
+        date < today ||
+        date > maxDate;
+
+      const state =
+        barber && !outsideRange
+          ? getDateAvailability(
+              barber,
+              dateKey
+            )
+          : {
+              available: false,
+              status: "outside-range",
+              label: "",
+              times: []
+            };
+
+      const button =
+        document.createElement("button");
+
+      button.type = "button";
+      button.className = "booking-date-day";
+      button.dataset.date = dateKey;
+
+      const number =
+        document.createElement("span");
+      number.className = "booking-date-number";
+      number.textContent = String(day);
+      button.appendChild(number);
+
+      if (state.label) {
+        const status =
+          document.createElement("small");
+        status.className = "booking-date-status";
+        status.textContent = state.label;
+        button.appendChild(status);
+      }
+
+      if (
+        dateInput &&
+        dateInput.value === dateKey
+      ) {
+        button.classList.add("is-selected");
+      }
+
+      if (!state.available) {
+        button.disabled = true;
+        button.classList.add("is-unavailable");
+
+        if (state.status === "full") {
+          button.classList.add("is-full");
+        }
+
+        if (state.status === "off") {
+          button.classList.add("is-off");
+        }
+      } else {
+        button.title =
+          `${state.times.length} appointment time${state.times.length === 1 ? "" : "s"} available`;
+
+        button.addEventListener(
+          "click",
+          () => {
+            if (!dateInput) return;
+
+            dateInput.value = dateKey;
+            renderBookingDateCalendar();
+            updateAvailableTimes();
+          }
+        );
+      }
+
+      bookingDateGrid.appendChild(button);
+    }
+
+    if (bookingDateNote) {
+      bookingDateNote.textContent = barber
+        ? "Gray OFF and FULL dates cannot be selected."
+        : "Choose a barber to see available dates.";
+    }
+
+    if (
+      barber &&
+      dateInput &&
+      dateInput.value
+    ) {
+      const selectedState =
+        getDateAvailability(
+          barber,
+          dateInput.value
+        );
+
+      if (!selectedState.available) {
+        dateInput.value = "";
+        resetTimeSelect();
+      }
+    }
+
+  }
 
 
   // ============================================================
@@ -1821,159 +2241,145 @@ document.addEventListener("DOMContentLoaded", () => {
 
     resetTimeSelect();
 
+    const barber =
+      getBookableBarberById(
+        selectedBarberId
+      );
 
     if (
-      !selectedBarberId ||
+      !barber ||
+      !dateInput ||
       !dateInput.value
     ) {
       return;
     }
 
-
-    const barber =
-      getBarberById(
-        selectedBarberId
+    const availability =
+      getDateAvailability(
+        barber,
+        dateInput.value
       );
 
-
-    if (
-      !barber ||
-      !barber.schedule
-    ) {
+    if (!availability.available) {
+      addTimeMessage(
+        availability.status === "full"
+          ? "This date is fully booked."
+          : "This barber is not available on that day."
+      );
       return;
     }
 
+    availability.times.forEach(time => {
 
-    const schedule =
-      barber.schedule;
+      const option =
+        document.createElement("option");
 
+      option.value =
+        time;
 
-    const selectedDate =
-      new Date(
-        dateInput.value +
-        "T12:00:00"
-      );
+      option.textContent =
+        convertTo12Hour(time);
 
-
-    const dayOfWeek =
-      selectedDate.getDay();
-
-
-    const workingDays =
-      schedule.workingDays ||
-      [];
-
-
-    if (
-      !workingDays.includes(
-        dayOfWeek
-      )
-    ) {
-
-      addDisabledTimeOption(
-        `${barber.name} is unavailable this day`
-      );
-
-      return;
-
-    }
-
-
-    const times =
-      createTimeSlots(
-        schedule.startTime,
-        schedule.endTime,
-        APPOINTMENT_LENGTH
-      );
-
-
-    const bookings =
-      getBookings();
-
-
-    times.forEach(time => {
-
-      if (
-        isDuringBreak(
-          time,
-          schedule.breaks ||
-          []
-        )
-      ) {
-        return;
-      }
-
-
-      if (
-        isPastTimeToday(
-          dateInput.value,
-          time
-        )
-      ) {
-        return;
-      }
-
-
-      const alreadyBooked =
-        bookings.some(
-          booking => {
-
-            return (
-
-              booking.barberId ===
-                selectedBarberId &&
-
-              booking.date ===
-                dateInput.value &&
-
-              booking.time ===
-                time
-
-            );
-
-          }
-        );
-
-
-      if (!alreadyBooked) {
-
-        const option =
-          document.createElement(
-            "option"
-          );
-
-        option.value =
-          time;
-
-        option.textContent =
-          convertTo12Hour(
-            time
-          );
-
-        timeSelect.appendChild(
-          option
-        );
-
-      }
+      timeSelect.appendChild(option);
 
     });
 
+  }
 
-    if (
-      timeSelect.options.length ===
-      1
-    ) {
 
-      addDisabledTimeOption(
-        "No appointments available"
+  function bookingBlocksSlot(booking) {
+
+    if (!booking) return false;
+
+    const status =
+      String(booking.ownerStatus || booking.status || "confirmed")
+        .toLowerCase();
+
+    if (status !== "canceled") {
+      return true;
+    }
+
+    // A customer cancellation reopens the slot. An owner/employee
+    // cancellation remains blocked until someone reopens it.
+    return booking.slotBlocked === true;
+
+  }
+
+
+  function getApprovedTimeOff() {
+
+    try {
+      const requests = JSON.parse(
+        localStorage.getItem(TIME_OFF_STORAGE_KEY) || "[]"
       );
 
+      return Array.isArray(requests)
+        ? requests.filter(request => request.status === "approved")
+        : [];
+    } catch {
+      return [];
     }
 
   }
 
 
+  function flexibleTimeToMinutes(value) {
+
+    const raw = String(value || "").trim();
+    const twentyFourHour = raw.match(/^(\d{1,2}):(\d{2})$/);
+
+    if (twentyFourHour) {
+      return Number(twentyFourHour[1]) * 60 + Number(twentyFourHour[2]);
+    }
+
+    const twelveHour = raw.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    if (!twelveHour) return NaN;
+
+    let hour = Number(twelveHour[1]) % 12;
+    const minute = Number(twelveHour[2]);
+
+    if (twelveHour[3].toUpperCase() === "PM") hour += 12;
+    return hour * 60 + minute;
+
+  }
+
+
+  function isBlockedByApprovedTimeOff(barberName, dateKey, time) {
+
+    const slotStart = flexibleTimeToMinutes(time);
+
+    return getApprovedTimeOff().some(request => {
+      if (
+        String(request.employee || "").toLowerCase() !==
+        String(barberName || "").toLowerCase()
+      ) return false;
+
+      if (dateKey < request.startDate || dateKey > request.endDate) {
+        return false;
+      }
+
+      if (request.allDay) return true;
+
+      const blockedStart = flexibleTimeToMinutes(request.startTime);
+      const blockedEnd = flexibleTimeToMinutes(request.endTime);
+
+      if (
+        Number.isNaN(slotStart) ||
+        Number.isNaN(blockedStart) ||
+        Number.isNaN(blockedEnd)
+      ) return true;
+
+      return slotStart >= blockedStart && slotStart < blockedEnd;
+    });
+
+  }
+
+
   function resetTimeSelect() {
+
+    if (!timeSelect) {
+      return;
+    }
 
     timeSelect.innerHTML = `
       <option value="">
@@ -1984,143 +2390,112 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
 
-  function addDisabledTimeOption(
-    text
+  function addTimeMessage(
+    message
   ) {
 
+    if (!timeSelect) {
+      return;
+    }
+
     const option =
-      document.createElement(
-        "option"
-      );
+      document.createElement("option");
 
-    option.textContent =
-      text;
+    option.value = "";
+    option.disabled = true;
+    option.textContent = message;
 
-    option.disabled =
-      true;
-
-    timeSelect.appendChild(
-      option
-    );
+    timeSelect.appendChild(option);
 
   }
 
 
-  // ============================================================
-  // TIME SLOTS
-  // ============================================================
-
-  function createTimeSlots(
+  function generateTimeSlots(
     startTime,
     endTime,
-    interval
+    intervalMinutes
   ) {
+
+    const startMinutes =
+      timeToMinutes(startTime);
+
+    const endMinutes =
+      timeToMinutes(endTime);
 
     const slots = [];
 
-
-    let current =
-      timeToMinutes(
-        startTime
-      );
-
-    const end =
-      timeToMinutes(
-        endTime
-      );
-
-
-    while (
-      current + interval <=
-      end
+    for (
+      let minutes = startMinutes;
+      minutes + intervalMinutes <= endMinutes;
+      minutes += intervalMinutes
     ) {
-
       slots.push(
-        minutesToTime(
-          current
-        )
+        minutesToTime(minutes)
       );
-
-      current +=
-        interval;
-
     }
-
 
     return slots;
 
   }
 
 
-  function isDuringBreak(
+  function timeFallsWithinRange(
     time,
-    breaks
+    rangeStart,
+    rangeEnd
   ) {
 
-    const minutes =
-      timeToMinutes(
-        time
-      );
+    if (
+      !rangeStart ||
+      !rangeEnd
+    ) {
+      return false;
+    }
 
+    const value =
+      timeToMinutes(time);
 
-    return breaks.some(
-      breakTime => {
+    const start =
+      timeToMinutes(rangeStart);
 
-        const start =
-          timeToMinutes(
-            breakTime.start
-          );
+    const end =
+      timeToMinutes(rangeEnd);
 
-        const end =
-          timeToMinutes(
-            breakTime.end
-          );
-
-
-        return (
-          minutes >= start &&
-          minutes < end
-        );
-
-      }
+    return (
+      value >= start &&
+      value < end
     );
 
   }
 
 
-  function isPastTimeToday(
-    dateString,
-    time
+  function isPastTime(
+    dateValue,
+    timeValue
   ) {
 
-    const today =
-      formatDateForInput(
-        new Date()
-      );
+    const date =
+      parseDateInput(dateValue);
 
-
-    if (
-      dateString !==
-      today
-    ) {
+    if (!date) {
       return false;
     }
 
+    const [hours, minutes] =
+      timeValue
+        .split(":")
+        .map(Number);
 
-    const now =
-      new Date();
-
-
-    const currentMinutes =
-      now.getHours() * 60 +
-      now.getMinutes();
-
+    date.setHours(
+      hours,
+      minutes,
+      0,
+      0
+    );
 
     return (
-      timeToMinutes(
-        time
-      ) <=
-      currentMinutes
+      date.getTime() <=
+      Date.now()
     );
 
   }
@@ -2130,118 +2505,119 @@ document.addEventListener("DOMContentLoaded", () => {
   // CONFIRM BOOKING
   // ============================================================
 
-  confirmButton.addEventListener(
-    "click",
-    confirmAppointment
-  );
+  if (confirmButton) {
+    confirmButton.addEventListener(
+      "click",
+      confirmBooking
+    );
+  }
 
-
-  function confirmAppointment() {
+  async function confirmBooking() {
 
     const barber =
-      getBarberById(
+      getBookableBarberById(
         selectedBarberId
       );
 
-
     const service =
       getServiceById(
-        serviceSelect.value
+        serviceSelect
+          ? serviceSelect.value
+          : ""
       );
-
 
     const date =
-      dateInput.value;
+      dateInput
+        ? dateInput.value
+        : "";
 
     const time =
-      timeSelect.value;
+      timeSelect
+        ? timeSelect.value
+        : "";
 
     const customerName =
-      nameInput.value.trim();
+      nameInput
+        ? nameInput.value.trim()
+        : "";
 
-    const phone =
-      phoneInput.value.trim();
+    const customerPhone =
+      phoneInput
+        ? phoneInput.value.trim()
+        : "";
+
+    if (!barber) {
+      showBookingError(
+        "Please choose a barber."
+      );
+      return;
+    }
+
+    if (!service) {
+      showBookingError(
+        "Please choose a service."
+      );
+      return;
+    }
+
+    if (!date) {
+      showBookingError(
+        "Please choose a date."
+      );
+      return;
+    }
+
+    if (!time) {
+      showBookingError(
+        "Please choose an available time."
+      );
+      return;
+    }
+
+    if (!customerName) {
+      showBookingError(
+        "Please enter your name."
+      );
+      return;
+    }
 
     const formattedPhone =
-      formatUSPhone(
-        phone
-      );
-
-
-    if (
-      !barber ||
-      !service ||
-      !date ||
-      !time ||
-      !customerName ||
-      !phone
-    ) {
-
-      showBookingError(
-        "Please complete all appointment fields."
-      );
-
-      return;
-
-    }
-
+      formatUSPhone(customerPhone);
 
     if (!formattedPhone) {
-
       showBookingError(
-        "Please enter a valid 10-digit US phone number."
+        "Please enter a valid 10-digit mobile phone number."
       );
-
       return;
-
     }
-
 
     const bookings =
       getBookings();
 
-
-    const slotTaken =
-      bookings.some(
-        booking => {
-
-          return (
-
-            booking.barberId ===
-              barber.id &&
-
-            booking.date ===
-              date &&
-
-            booking.time ===
-              time
-
-          );
-
-        }
+    const timeWasTaken =
+      bookings.some(booking =>
+        booking.barberId === barber.id &&
+        booking.date === date &&
+        booking.time === time &&
+        bookingBlocksSlot(booking)
       );
 
-
-    if (slotTaken) {
-
+    if (timeWasTaken) {
       showBookingError(
-        "That appointment is no longer available. Please choose another time."
+        "That appointment time was just taken. Please choose another time."
       );
-
       updateAvailableTimes();
-
       return;
-
     }
-
 
     const booking = {
 
       id:
-        Date.now().toString(),
+        createBookingId(),
 
       shopName:
-        shop.name,
+        shop.name ||
+        "Barber Shop",
 
       barberId:
         barber.id,
@@ -2256,62 +2632,324 @@ document.addEventListener("DOMContentLoaded", () => {
         service.name,
 
       servicePrice:
-        service.price,
+        Number(service.price || 0),
 
-      date:
-        date,
-
-      time:
-        time,
-
-      customerName:
-        customerName,
+      date,
+      time,
+      customerName,
 
       phone:
         formattedPhone,
 
       smsConsent:
-        smsConsent.checked
+        Boolean(
+          smsConsent &&
+          smsConsent.checked
+        ),
+
+      ownerStatus:
+        "pending-payment-choice",
+
+      paymentStatus:
+        "pending",
+
+      paymentChoice:
+        "",
+
+      cancellationSource:
+        "",
+
+      slotBlocked:
+        false,
+
+      createdAt:
+        new Date().toISOString()
 
     };
 
+    const paymentWindow =
+      window.open(
+        "about:blank",
+        "_blank"
+      );
 
-    bookings.push(
-      booking
-    );
+    if (!paymentWindow) {
+      showBookingError(
+        "Please allow pop-ups for this page so the secure card page can open."
+      );
+      return;
+    }
 
-    saveBookings(
-      bookings
-    );
+    if (confirmButton) {
+      confirmButton.disabled = true;
+      confirmButton.textContent =
+        "Opening Secure Card Page...";
+    }
 
-    showConfirmation(
-      booking
-    );
+    if (confirmationMessage) {
+      confirmationMessage.innerHTML = `
+        <p class="sms-demo-message">
+          Opening secure Stripe test card page...
+        </p>
+      `;
+    }
 
-    updateAvailableTimes();
+    try {
 
+      const checkoutResponse =
+        await fetch(
+          APPOINTMENT_CHECKOUT_URL,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+            body:
+              JSON.stringify({
+                bookingId:
+                  booking.id,
+                shopName:
+                  booking.shopName,
+                barberName:
+                  booking.barberName,
+                serviceName:
+                  booking.serviceName,
+                servicePrice:
+                  booking.servicePrice,
+                customerName:
+                  booking.customerName,
+                phone:
+                  booking.phone,
+                appointmentDate:
+                  booking.date,
+                appointmentTime:
+                  convertTo12Hour(
+                    booking.time
+                  ),
+                appointmentTime24:
+                  booking.time,
+                smsConsent:
+                  booking.smsConsent
+              })
+          }
+        );
 
-    if (
-      booking.smsConsent
-    ) {
+      const checkoutResult =
+        await checkoutResponse.json();
 
-      sendConfirmationText(
+      if (
+        !checkoutResponse.ok ||
+        !checkoutResult.success ||
+        !checkoutResult.url ||
+        !checkoutResult.sessionId
+      ) {
+        throw new Error(
+          checkoutResult.error ||
+          "The secure card page could not be opened."
+        );
+      }
+
+      booking.paymentReference =
+        checkoutResult.sessionId;
+
+      paymentWindow.location.href =
+        checkoutResult.url;
+
+      if (confirmationMessage) {
+        confirmationMessage.innerHTML = `
+          <p class="sms-demo-message">
+            Enter the test card in Stripe. After the card is saved,
+            choose PAY NOW BY CARD or PAY AT STORE.
+          </p>
+        `;
+      }
+
+      const finalStatus =
+        await waitForAppointmentConfirmation(
+          checkoutResult.sessionId,
+          paymentWindow
+        );
+
+      if (!finalStatus.confirmed) {
+        throw new Error(
+          "The appointment was not confirmed."
+        );
+      }
+
+      const latestBookings =
+        getBookings();
+
+      const slotWasTaken =
+        latestBookings.some(item =>
+          item.barberId === barber.id &&
+          item.date === date &&
+          item.time === time &&
+          bookingBlocksSlot(item)
+        );
+
+      if (slotWasTaken) {
+        throw new Error(
+          "The appointment was confirmed, but that time was already taken locally. Please contact the shop."
+        );
+      }
+
+      booking.ownerStatus =
+        "confirmed";
+
+      booking.paymentChoice =
+        finalStatus.paymentChoice ||
+        "";
+
+      booking.paymentStatus =
+        finalStatus.paid
+          ? "paid"
+          : "pay-at-store";
+
+      booking.amountPaid =
+        Number(
+          finalStatus.amountTotal ||
+          0
+        ) / 100;
+
+      booking.manageUrl =
+        finalStatus.manageUrl ||
+        "";
+
+      booking.confirmedAt =
+        new Date().toISOString();
+
+      latestBookings.push(booking);
+      saveBookings(latestBookings);
+
+      showConfirmation(booking);
+      renderBookingDateCalendar();
+      updateAvailableTimes();
+
+      await sendPaidAppointmentNotifications(
         booking
       );
 
+    } catch (error) {
+
+      try {
+        if (
+          paymentWindow &&
+          !paymentWindow.closed &&
+          paymentWindow.location.href === "about:blank"
+        ) {
+          paymentWindow.close();
+        }
+      } catch {
+        // Cross-origin Stripe window. Nothing to close here.
+      }
+
+      console.error(
+        "Appointment confirmation error:",
+        error
+      );
+
+      showBookingError(
+        error.message ||
+        "The appointment could not be completed."
+      );
+
+    } finally {
+
+      if (confirmButton) {
+        confirmButton.disabled = false;
+        confirmButton.textContent =
+          "Confirm Appointment";
+      }
+
     }
 
+  }
 
-    // Automatically close the booking popup
-    // after the customer sees the confirmation.
-    window.setTimeout(
-      () => {
 
-        closeBookingModal();
+  async function waitForAppointmentConfirmation(
+    sessionId,
+    paymentWindow
+  ) {
 
-      },
-      2000
-    );
+    const startedAt =
+      Date.now();
+
+    const maximumWaitMs =
+      10 * 60 * 1000;
+
+    while (
+      Date.now() - startedAt <
+      maximumWaitMs
+    ) {
+
+      await new Promise(resolve =>
+        setTimeout(resolve, 2000)
+      );
+
+      try {
+
+        const response =
+          await fetch(
+            `${APPOINTMENT_STATUS_URL}?session_id=${encodeURIComponent(sessionId)}`
+          );
+
+        const result =
+          await response.json();
+
+        if (
+          response.ok &&
+          result.success &&
+          result.confirmed
+        ) {
+          return result;
+        }
+
+      } catch (error) {
+        console.error(
+          "Appointment status check error:",
+          error
+        );
+      }
+
+      if (
+        paymentWindow &&
+        paymentWindow.closed
+      ) {
+
+        try {
+
+          const finalResponse =
+            await fetch(
+              `${APPOINTMENT_STATUS_URL}?session_id=${encodeURIComponent(sessionId)}`
+            );
+
+          const finalResult =
+            await finalResponse.json();
+
+          if (
+            finalResponse.ok &&
+            finalResult.success &&
+            finalResult.confirmed
+          ) {
+            return finalResult;
+          }
+
+        } catch {
+          // The final status check failed.
+        }
+
+        return {
+          confirmed: false
+        };
+
+      }
+
+    }
+
+    return {
+      confirmed: false
+    };
 
   }
 
@@ -2319,6 +2957,10 @@ document.addEventListener("DOMContentLoaded", () => {
   function showBookingError(
     message
   ) {
+
+    if (!confirmationMessage) {
+      return;
+    }
 
     confirmationMessage.innerHTML = `
       <p class="booking-error">
@@ -2337,17 +2979,19 @@ document.addEventListener("DOMContentLoaded", () => {
     booking
   ) {
 
+    if (!confirmationMessage) {
+      return;
+    }
+
     const displayDate =
       formatDisplayDate(
         booking.date
       );
 
-
     const displayTime =
       convertTo12Hour(
         booking.time
       );
-
 
     const endTime =
       addMinutes(
@@ -2355,27 +2999,33 @@ document.addEventListener("DOMContentLoaded", () => {
         APPOINTMENT_LENGTH
       );
 
+    const paymentText =
+      booking.paymentChoice ===
+      "pay_at_store"
+        ? "Pay at Store"
+        : `Paid ${formatPrice(
+            Number(
+              booking.amountPaid ??
+              booking.servicePrice
+            )
+          )}`;
 
-    const smsStatus =
-      booking.smsConsent
+    const manageLink =
+      booking.manageUrl
         ? `
-            <p
-              class="sms-demo-message"
-              id="sms-status-${booking.id}"
+          <p>
+            <a
+              href="${escapeAttribute(booking.manageUrl)}"
+              target="_blank"
+              rel="noopener"
             >
-              Sending confirmation text...
-            </p>
-          `
-        : `
-            <p class="sms-demo-message">
-              SMS notifications were not selected.
-              Your appointment is still confirmed.
-            </p>
-          `;
-
+              Cancel or Reschedule Appointment
+            </a>
+          </p>
+        `
+        : "";
 
     confirmationMessage.innerHTML = `
-
       <div class="booking-confirmed">
 
         <h3>
@@ -2412,164 +3062,118 @@ document.addEventListener("DOMContentLoaded", () => {
         </p>
 
         <p>
-          <strong>Confirmation #:</strong>
-          ${booking.id.slice(-6)}
+          <strong>Payment:</strong>
+          ${escapeHTML(paymentText)}
         </p>
 
-        ${smsStatus}
+        <p>
+          <strong>Confirmation #:</strong>
+          ${escapeHTML(booking.id.slice(-6))}
+        </p>
 
-        <button
-          type="button"
-          class="cancel-appointment"
-          data-booking-id="${booking.id}"
+        <p
+          class="sms-demo-message"
+          id="notification-status-${escapeAttribute(booking.id)}"
         >
-          Cancel Appointment
-        </button>
+          Checking appointment notifications...
+        </p>
+
+        ${manageLink}
 
       </div>
-
     `;
-
-
-    const cancelButton =
-      confirmationMessage.querySelector(
-        ".cancel-appointment"
-      );
-
-
-    if (cancelButton) {
-
-      cancelButton.addEventListener(
-        "click",
-        () => {
-
-          cancelAppointment(
-            booking.id
-          );
-
-        }
-      );
-
-    }
 
   }
 
 
   // ============================================================
-  // SMS
+  // APPOINTMENT NOTIFICATIONS
   // ============================================================
 
-  async function sendConfirmationText(
+  async function sendPaidAppointmentNotifications(
     booking
   ) {
 
     const status =
       document.getElementById(
-        `sms-status-${booking.id}`
+        `notification-status-${booking.id}`
       );
-
-
-    if (!SMS_SERVER_URL) {
-
-      if (status) {
-
-        status.textContent =
-          "Appointment confirmed. SMS service is not configured.";
-
-      }
-
-      return;
-
-    }
-
 
     try {
 
       const response =
         await fetch(
-          SMS_SERVER_URL,
+          APPOINTMENT_NOTIFICATION_URL,
           {
-
-            method:
-              "POST",
-
+            method: "POST",
             headers: {
-
               "Content-Type":
                 "application/json"
-
             },
-
             body:
               JSON.stringify({
-
-                shopName:
-                  booking.shopName ||
-                  shop.name ||
-                  "Barber Shop",
-
-                phone:
-                  booking.phone,
-
-                barber:
-                  booking.barberName,
-
-                service:
-                  booking.serviceName,
-
-                date:
-                  booking.date,
-
-                time:
-                  booking.time,
-
-                customerName:
-                  booking.customerName
-
+                sessionId:
+                  booking.paymentReference
               })
-
           }
         );
 
-
       const result =
         await response.json();
-
 
       if (
         !response.ok ||
         !result.success
       ) {
-
         throw new Error(
           result.error ||
-          "Text message could not be sent."
+          "Appointment notifications could not be sent."
         );
-
       }
 
+      if (
+        result.manageUrl &&
+        !booking.manageUrl
+      ) {
+        booking.manageUrl =
+          result.manageUrl;
+      }
+
+      const parts = [];
+
+      if (booking.smsConsent) {
+        parts.push(
+          result.smsSent
+            ? "✓ Confirmation text sent."
+            : "Confirmation text could not be sent."
+        );
+      } else {
+        parts.push(
+          "SMS notifications were not selected."
+        );
+      }
+
+      parts.push(
+        result.emailSent
+          ? "✓ Owner/barber email sent."
+          : "Owner/barber email could not be sent."
+      );
 
       if (status) {
-
         status.textContent =
-          "✓ Confirmation text sent to your phone.";
-
+          parts.join(" ");
       }
-
 
     } catch (error) {
 
       console.error(
-        "SMS confirmation error:",
+        "Appointment notification error:",
         error
       );
 
-
       if (status) {
-
         status.textContent =
-          "Appointment saved, but the confirmation text could not be sent.";
-
+          "The appointment is confirmed, but the notification check failed.";
       }
 
     }
@@ -2588,32 +3192,30 @@ document.addEventListener("DOMContentLoaded", () => {
     const bookings =
       getBookings();
 
-
     const booking =
       bookings.find(
         item =>
-          item.id ===
-          bookingId
+          item.id === bookingId
       );
-
-
-    const updatedBookings =
-      bookings.filter(
-        item =>
-          item.id !==
-          bookingId
-      );
-
-
-    saveBookings(
-      updatedBookings
-    );
-
 
     if (booking) {
+      booking.ownerStatus = "canceled";
+      booking.cancellationSource = "Customer Cancellation";
+      booking.cancellationReason = "Customer canceled appointment";
+      booking.customerMessage = "";
+      booking.slotBlocked = false;
+      booking.cancelledAt = new Date().toISOString();
+      booking.updatedAt = booking.cancelledAt;
+    }
+
+    saveBookings(bookings);
+
+    if (
+      booking &&
+      confirmationMessage
+    ) {
 
       confirmationMessage.innerHTML = `
-
         <div class="booking-cancelled">
 
           <h3>
@@ -2636,11 +3238,9 @@ document.addEventListener("DOMContentLoaded", () => {
           </p>
 
         </div>
-
       `;
 
     }
-
 
     updateAvailableTimes();
 
@@ -2654,18 +3254,13 @@ document.addEventListener("DOMContentLoaded", () => {
   function getBookings() {
 
     try {
-
       return JSON.parse(
         localStorage.getItem(
           STORAGE_KEY
         )
       ) || [];
-
-
     } catch {
-
       return [];
-
     }
 
   }
@@ -2677,9 +3272,104 @@ document.addEventListener("DOMContentLoaded", () => {
 
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify(
-        bookings
-      )
+      JSON.stringify(bookings)
+    );
+
+  }
+
+
+  // ============================================================
+  // POLICY LINKS
+  // ============================================================
+
+  function configurePolicyLinks() {
+
+    const hasPrivacy =
+      Boolean(
+        smsSettings.privacyUrl
+      );
+
+    const hasTerms =
+      Boolean(
+        smsSettings.termsUrl
+      );
+
+    if (
+      privacyPolicyLink &&
+      hasPrivacy
+    ) {
+      privacyPolicyLink.href =
+        smsSettings.privacyUrl;
+    }
+
+    if (
+      termsPolicyLink &&
+      hasTerms
+    ) {
+      termsPolicyLink.href =
+        smsSettings.termsUrl;
+    }
+
+    if (smsPolicyLinks) {
+      smsPolicyLinks.hidden =
+        !(hasPrivacy && hasTerms);
+    }
+
+  }
+
+
+  // ============================================================
+  // BUSINESS PRO CTA SCROLL GLOW
+  // ============================================================
+
+  function configureCtaScrollGlow() {
+
+    if (!ctaButton) {
+      return;
+    }
+
+    let glowRunning = false;
+
+    const triggerGlow = () => {
+
+      const rect =
+        ctaButton.getBoundingClientRect();
+
+      const visible =
+        rect.top < window.innerHeight &&
+        rect.bottom > 0;
+
+      if (
+        !visible ||
+        glowRunning
+      ) {
+        return;
+      }
+
+      glowRunning = true;
+
+      ctaButton.classList.add(
+        "scroll-glow"
+      );
+
+      window.setTimeout(
+        () => {
+          ctaButton.classList.remove(
+            "scroll-glow"
+          );
+          glowRunning = false;
+        },
+        900
+      );
+
+    };
+
+    window.addEventListener(
+      "scroll",
+      triggerGlow,
+      {
+        passive: true
+      }
     );
 
   }
@@ -2689,14 +3379,25 @@ document.addEventListener("DOMContentLoaded", () => {
   // LOOKUPS
   // ============================================================
 
-  function getBarberById(
+  function getProfileById(
+    profileId
+  ) {
+
+    return profiles.find(
+      profile =>
+        profile.id === profileId
+    ) || null;
+
+  }
+
+
+  function getBookableBarberById(
     barberId
   ) {
 
-    return barbers.find(
+    return bookableBarbers.find(
       barber =>
-        barber.id ===
-        barberId
+        barber.id === barberId
     ) || null;
 
   }
@@ -2708,60 +3409,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
     return services.find(
       service =>
-        service.id ===
-        serviceId
+        service.id === serviceId
     ) || null;
 
   }
 
 
   // ============================================================
-  // PRIVACY LINKS
-  // ============================================================
-
-  function configurePolicyLinks() {
-
-    const links =
-      document.querySelectorAll(
-        ".sms-policy-links a"
-      );
-
-
-    if (
-      links[0] &&
-      smsSettings.privacyUrl
-    ) {
-
-      links[0].href =
-        smsSettings.privacyUrl;
-
-    }
-
-
-    if (
-      links[1] &&
-      smsSettings.termsUrl
-    ) {
-
-      links[1].href =
-        smsSettings.termsUrl;
-
-    }
-
-  }
-
-
-  // ============================================================
-  // INITIALS
+  // HELPERS
   // ============================================================
 
   function getInitials(
     name
   ) {
 
-    return String(
-      name || ""
-    )
+    return String(name || "")
       .trim()
       .split(/\s+/)
       .map(
@@ -2775,169 +3437,149 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
 
-  // ============================================================
-  // PHONE
-  // ============================================================
-
   function formatUSPhone(
     phone
   ) {
 
-    const digits =
-      String(
-        phone || ""
-      )
-        .replace(
-          /\D/g,
-          ""
-        );
-
+    let digits =
+      String(phone || "")
+        .replace(/\D/g, "");
 
     if (
-      digits.length ===
-      10
+      digits.length === 11 &&
+      digits.startsWith("1")
     ) {
-
-      return `+1${digits}`;
-
+      digits =
+        digits.slice(1);
     }
 
-
-    if (
-      digits.length ===
-        11 &&
-      digits.startsWith(
-        "1"
-      )
-    ) {
-
-      return `+${digits}`;
-
+    if (digits.length !== 10) {
+      return "";
     }
 
-
-    return null;
+    return `+1${digits}`;
 
   }
 
 
-  // ============================================================
-  // PRICE
-  // ============================================================
-
   function formatPrice(
-    price
+    value
   ) {
 
     const number =
-      Number(
-        price
-      );
+      Number(value);
 
-
-    if (
-      Number.isNaN(
-        number
-      )
-    ) {
-
-      return "";
-
+    if (!Number.isFinite(number)) {
+      return "$0";
     }
 
-
-    if (
-      Number.isInteger(
-        number
-      )
-    ) {
-
-      return `$${number}`;
-
-    }
-
-
-    return `$${number.toFixed(2)}`;
+    return number.toLocaleString(
+      "en-US",
+      {
+        style:
+          "currency",
+        currency:
+          "USD",
+        minimumFractionDigits:
+          Number.isInteger(number)
+            ? 0
+            : 2,
+        maximumFractionDigits:
+          2
+      }
+    );
 
   }
 
 
-  // ============================================================
-  // TIME
-  // ============================================================
-
-  function timeToMinutes(
-    time
+  function formatDisplayDate(
+    dateValue
   ) {
+
+    const date =
+      parseDateInput(dateValue);
+
+    if (!date) {
+      return dateValue;
+    }
+
+    return date.toLocaleDateString(
+      "en-US",
+      {
+        weekday:
+          "long",
+        month:
+          "long",
+        day:
+          "numeric",
+        year:
+          "numeric"
+      }
+    );
+
+  }
+
+
+  function parseDateInput(
+    value
+  ) {
+
+    if (!value) {
+      return null;
+    }
 
     const parts =
-      time.split(
-        ":"
+      value
+        .split("-")
+        .map(Number);
+
+    if (
+      parts.length !== 3 ||
+      parts.some(
+        part =>
+          !Number.isFinite(part)
+      )
+    ) {
+      return null;
+    }
+
+    const date =
+      new Date(
+        parts[0],
+        parts[1] - 1,
+        parts[2]
       );
 
-
-    return (
-
-      Number(parts[0]) *
-        60 +
-
-      Number(parts[1])
-
+    date.setHours(
+      0,
+      0,
+      0,
+      0
     );
+
+    return date;
 
   }
 
 
-  function minutesToTime(
-    minutes
+  function toDateInputValue(
+    date
   ) {
 
-    const hours =
-      Math.floor(
-        minutes /
-        60
-      );
+    const year =
+      date.getFullYear();
 
-    const mins =
-      minutes %
-      60;
+    const month =
+      String(
+        date.getMonth() + 1
+      ).padStart(2, "0");
 
+    const day =
+      String(
+        date.getDate()
+      ).padStart(2, "0");
 
-    return (
-
-      String(hours)
-        .padStart(
-          2,
-          "0"
-        ) +
-
-      ":" +
-
-      String(mins)
-        .padStart(
-          2,
-          "0"
-        )
-
-    );
-
-  }
-
-
-  function addMinutes(
-    time,
-    minutes
-  ) {
-
-    return minutesToTime(
-
-      timeToMinutes(
-        time
-      ) +
-
-      minutes
-
-    );
+    return `${year}-${month}-${day}`;
 
   }
 
@@ -2946,154 +3588,122 @@ document.addEventListener("DOMContentLoaded", () => {
     time
   ) {
 
-    const parts =
-      time.split(
-        ":"
-      );
+    if (!time) {
+      return "";
+    }
 
+    const [hourValue, minuteValue] =
+      time
+        .split(":")
+        .map(Number);
 
-    let hour =
-      Number(
-        parts[0]
-      );
-
-
-    const minutes =
-      parts[1];
-
+    if (
+      !Number.isFinite(hourValue) ||
+      !Number.isFinite(minuteValue)
+    ) {
+      return time;
+    }
 
     const period =
-      hour >= 12
+      hourValue >= 12
         ? "PM"
         : "AM";
 
+    const hour =
+      hourValue % 12 || 12;
 
-    hour =
-      hour %
-      12;
-
-
-    if (
-      hour ===
-      0
-    ) {
-
-      hour =
-        12;
-
-    }
-
-
-    return `${hour}:${minutes} ${period}`;
+    return `${hour}:${String(minuteValue).padStart(2, "0")} ${period}`;
 
   }
 
 
-  // ============================================================
-  // DATE
-  // ============================================================
-
-  function formatDateForInput(
-    date
+  function timeToMinutes(
+    time
   ) {
 
-    const year =
-      date.getFullYear();
+    const [hours, minutes] =
+      String(time || "0:0")
+        .split(":")
+        .map(Number);
 
-
-    const month =
-      String(
-        date.getMonth() +
-        1
-      )
-        .padStart(
-          2,
-          "0"
-        );
-
-
-    const day =
-      String(
-        date.getDate()
-      )
-        .padStart(
-          2,
-          "0"
-        );
-
-
-    return `${year}-${month}-${day}`;
-
-  }
-
-
-  function formatDisplayDate(
-    dateString
-  ) {
-
-    const date =
-      new Date(
-
-        dateString +
-        "T12:00:00"
-
-      );
-
-
-    return date.toLocaleDateString(
-      "en-US",
-      {
-
-        weekday:
-          "long",
-
-        month:
-          "long",
-
-        day:
-          "numeric",
-
-        year:
-          "numeric"
-
-      }
+    return (
+      (Number(hours) || 0) * 60 +
+      (Number(minutes) || 0)
     );
 
   }
 
 
-  // ============================================================
-  // TEXT SAFETY
-  // ============================================================
-
-  function escapeHTML(
-    text
+  function minutesToTime(
+    totalMinutes
   ) {
 
-    const div =
-      document.createElement(
-        "div"
+    const hours =
+      Math.floor(
+        totalMinutes / 60
       );
 
+    const minutes =
+      totalMinutes % 60;
 
-    div.textContent =
-      String(
-        text ?? ""
-      );
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+
+  }
 
 
-    return div.innerHTML;
+  function addMinutes(
+    time,
+    amount
+  ) {
+
+    return minutesToTime(
+      timeToMinutes(time) +
+      amount
+    );
+
+  }
+
+
+  function createBookingId() {
+
+    return `BPL-${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2, 8)
+      .toUpperCase()}`;
+
+  }
+
+
+  function escapeHTML(
+    value
+  ) {
+
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
 
   }
 
 
   function escapeAttribute(
-    text
+    value
+  ) {
+    return escapeHTML(value);
+  }
+
+
+  function escapeCssUrl(
+    value
   ) {
 
-    return escapeHTML(
-      text
-    );
+    return String(value ?? "")
+      .replace(/\\/g, "\\\\")
+      .replace(/"/g, '\\"')
+      .replace(/\n/g, "")
+      .replace(/\r/g, "");
 
   }
 
